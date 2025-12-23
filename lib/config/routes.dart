@@ -1,4 +1,4 @@
-import 'package:court_time/admin/admin_dashboard.dart';
+import 'package:court_time/owner/owner_dashboard.dart';
 import 'package:flutter/material.dart';
 
 // 1. Import all your screens here

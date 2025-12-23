@@ -1,4 +1,4 @@
-import 'package:court_time/admin/admin_dashboard.dart';
+import 'package:court_time/owner/owner_dashboard.dart';
 import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
 import '../home/home_dashboard.dart';      // Redirect regular users here    // Redirect admin here
