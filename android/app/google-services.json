@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "843662724600",
+    "project_id": "courttimeplus-3ffb5",
+    "storage_bucket": "courttimeplus-3ffb5.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:843662724600:android:5a7f07dde0895eb33c1a0d",
+        "android_client_info": {
+          "package_name": "com.example.court_time"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA4EikwFU3ZOo95IDYijkiIefGFwrRm6zY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:843662724600:android:d264b0ce9a521e913c1a0d",
+        "android_client_info": {
+          "package_name": "com.example.court_time_plus"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA4EikwFU3ZOo95IDYijkiIefGFwrRm6zY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
