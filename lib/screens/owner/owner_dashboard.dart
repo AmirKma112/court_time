@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
 import '../auth/login_screen.dart';
 // import 'owner_manage_bookings.dart'; // We will create this next
-// import 'owner_manage_courts.dart';   // We will create this after
+import 'owner_manage_courts.dart';
 
 class OwnerDashboard extends StatelessWidget {
   const OwnerDashboard({super.key});
@@ -80,10 +80,10 @@ class OwnerDashboard extends StatelessWidget {
                     color: Colors.green,
                     count: "Add / Edit",
                     onTap: () {
-                      //  Navigator.push(
-                      //   context,
-                      //   MaterialPageRoute(builder: (context) => const OwnerManageCourts()),
-                      // );
+                       Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const OwnerManageCourts()),
+                      );
                     },
                   ),
                 ],

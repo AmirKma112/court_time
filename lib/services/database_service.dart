@@ -83,4 +83,41 @@ class DatabaseService {
       print("Error deleting booking: $e");
     }
   }
+
+  // =======================================================================
+  // owner_manage_court
+  // =======================================================================
+  // Fetch Courts specific to ONE Owner
+  Stream<List<CourtModel>> getOwnerCourts(String ownerId) {
+    return _courtsRef
+        .where('ownerId', isEqualTo: ownerId) // 🔒 The Security Filter
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs.map((doc) {
+        return CourtModel.fromMap(doc.data() as Map<String, dynamic>, doc.id);
+      }).toList();
+    });
+  }
+
+  // Delete Court
+  Future<void> deleteCourt(String courtId) async {
+    await _courtsRef.doc(courtId).delete();
+  }
+
+  // Save Court (Create or Update)
+  Future<void> saveCourt(CourtModel court, {required bool isEditing}) async {
+    if (isEditing) {
+      // UPDATE existing document
+      await _courtsRef.doc(court.id).update(court.toMap());
+    } else {
+      // CREATE new document
+      // Note: We don't manually set ID here, Firestore does it. 
+      // But our Model expects an ID. 
+      // Logic: Add to collection, then get the reference back.
+      DocumentReference docRef = await _courtsRef.add(court.toMap());
+      
+      // Optional: If you want to store the ID inside the document fields too
+      // await docRef.update({'id': docRef.id}); 
+    }
+  }
 }

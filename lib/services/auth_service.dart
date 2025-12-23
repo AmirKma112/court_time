@@ -22,7 +22,7 @@ class AuthService {
     }
   }
 
-  // Registration Function (We will use this in the next screen)
+  // Registration Function
   Future<String?> register({required String email, required String password}) async {
     try {
       await _auth.createUserWithEmailAndPassword(email: email, password: password);
