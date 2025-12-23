@@ -1,9 +1,8 @@
-// TODO Implement this library.import 'package:court_time/screens/auth/login_screen.dart';
-import 'package:court_time/screens/auth/login_screen.dart';
 import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
-// import 'admin_manage_bookings.dart'; 
-// import 'admin_manage_courts.dart';   
+import '../auth/login_screen.dart';
+// import 'owner_manage_bookings.dart'; // We will create this next
+// import 'owner_manage_courts.dart';   // We will create this after
 
 class OwnerDashboard extends StatelessWidget {
   const OwnerDashboard({super.key});
@@ -23,8 +22,8 @@ class OwnerDashboard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Admin Panel"),
-        backgroundColor: Colors.blueGrey, // Distinct Admin Color
+        title: const Text("Venue Owner Panel"),
+        backgroundColor: Colors.blueGrey, // Distinct Owner Color
         elevation: 2,
         actions: [
           IconButton(
@@ -41,46 +40,49 @@ class OwnerDashboard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              "Overview",
+              "Business Overview",
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              "Manage your courts and incoming reservations.",
+              style: TextStyle(fontSize: 14, color: Colors.grey),
             ),
             const SizedBox(height: 20),
             
             // Grid of Management Options
-            // Now cleaner with just 2 main options
             Expanded(
               child: GridView.count(
                 crossAxisCount: 2,
                 crossAxisSpacing: 16,
                 mainAxisSpacing: 16,
-                // Reduced children list
                 children: [
                   // 1. Manage Bookings Card
-                  _buildAdminCard(
+                  _buildOwnerCard(
                     context,
-                    title: "Manage Bookings",
+                    title: "Incoming Bookings",
                     icon: Icons.calendar_today,
                     color: Colors.orange,
-                    count: "View All", 
+                    count: "View & Approve", 
                     onTap: () {
                       //  Navigator.push(
                       //   context,
-                      //   MaterialPageRoute(builder: (context) => const AdminManageBookings()),
+                      //   MaterialPageRoute(builder: (context) => const OwnerManageBookings()),
                       // );
                     },
                   ),
 
                   // 2. Manage Courts Card
-                  _buildAdminCard(
+                  _buildOwnerCard(
                     context,
-                    title: "Manage Courts",
+                    title: "My Courts",
                     icon: Icons.stadium,
                     color: Colors.green,
-                    count: "Edit/Add",
+                    count: "Add / Edit",
                     onTap: () {
                       //  Navigator.push(
                       //   context,
-                      //   MaterialPageRoute(builder: (context) => const AdminManageCourts()),
+                      //   MaterialPageRoute(builder: (context) => const OwnerManageCourts()),
                       // );
                     },
                   ),
@@ -94,7 +96,7 @@ class OwnerDashboard extends StatelessWidget {
   }
 
   // Reusable Card Widget
-  Widget _buildAdminCard(BuildContext context, {
+  Widget _buildOwnerCard(BuildContext context, {
     required String title,
     required IconData icon,
     required Color color,
