@@ -150,7 +150,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text("New here?"),
+                    const Text("Don't have an Acccount?"),
                     TextButton(
                       onPressed: () {
                         Navigator.push(
@@ -158,7 +158,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           MaterialPageRoute(builder: (context) => const RegisterScreen()),
                         );
                       },
-                      child: const Text("Create Account"),
+                      child: const Text("Sign Up"),
                     ),
                   ],
                 ),
