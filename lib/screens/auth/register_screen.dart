@@ -99,6 +99,51 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 30),
 
+                // Role Selection Dropdown
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color.fromARGB(255, 136, 174, 238),
+                    border: Border.all(color: Colors.grey),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: _selectedRole,
+                      isExpanded: true,
+                      icon: const Icon(Icons.arrow_drop_down, color: Colors.blueAccent),
+                      items: const [
+                        DropdownMenuItem(
+                          value: 'player',
+                          child: Row(
+                            children: [
+                              Icon(Icons.person, color: Colors.blueAccent),
+                              SizedBox(width: 10),
+                              Text("Player"),
+                            ],
+                          ),
+                        ),
+                        DropdownMenuItem(
+                          value: 'owner',
+                          child: Row(
+                            children: [
+                              Icon(Icons.store, color: Colors.orange),
+                              SizedBox(width: 10),
+                              Text("Venue Owner"),
+                            ],
+                          ),
+                        ),
+                      ],
+                      onChanged: (String? newValue) {
+                        setState(() {
+                          _selectedRole = newValue!;
+                        });
+                      },
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                
                 // Name Field
                 TextFormField(
                   controller: _nameController,
@@ -121,50 +166,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     prefixIcon: Icon(Icons.phone),
                   ),
                   validator: (val) => val!.isEmpty ? "Phone is required" : null,
-                ),
-                const SizedBox(height: 16),
-
-                // ⭐️ NEW: Role Selection Dropdown
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      value: _selectedRole,
-                      isExpanded: true,
-                      icon: const Icon(Icons.arrow_drop_down, color: Colors.blueAccent),
-                      items: const [
-                        DropdownMenuItem(
-                          value: 'player',
-                          child: Row(
-                            children: [
-                              Icon(Icons.sports_tennis, color: Colors.blueAccent),
-                              SizedBox(width: 10),
-                              Text("I am a Player (Book Courts)"),
-                            ],
-                          ),
-                        ),
-                        DropdownMenuItem(
-                          value: 'owner',
-                          child: Row(
-                            children: [
-                              Icon(Icons.store, color: Colors.orange),
-                              SizedBox(width: 10),
-                              Text("I am a Venue Owner (Manage Courts)"),
-                            ],
-                          ),
-                        ),
-                      ],
-                      onChanged: (String? newValue) {
-                        setState(() {
-                          _selectedRole = newValue!;
-                        });
-                      },
-                    ),
-                  ),
                 ),
                 const SizedBox(height: 16),
 

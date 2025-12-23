@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/court_model.dart';
-import '../booking/slot_selection_screen.dart'; // We will create this next
+import '../player/booking/slot_selection_screen.dart';
 
 class CourtDetailScreen extends StatelessWidget {
   final CourtModel court;

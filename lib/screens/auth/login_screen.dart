@@ -1,8 +1,9 @@
-import 'package:court_time/screens/owner/owner_dashboard.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // To fetch user role
 import '../../services/auth_service.dart';
-import '../player/player_dashboard.dart';      // Redirect regular users here    // Redirect admin here
-import 'register_screen.dart';             // Redirect to sign up
+import '../player/player_dashboard.dart'; // Redirect Player here
+import '../owner/owner_dashboard.dart';   // Redirect Owner here
+import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -12,54 +13,72 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  // Controllers to retrieve text from input fields
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  
-  // Key for form validation
   final _formKey = GlobalKey<FormState>();
   
   bool _isLoading = false;
 
   void _handleLogin() async {
-    // 1. Validate the form (Check if empty)
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
 
-      // 2. Call Firebase Auth Service
+      // 1. Auth Login (Check email/password validity)
       String? result = await AuthService().login(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
 
-      setState(() => _isLoading = false);
-
       if (result == 'Success') {
-        if (!mounted) return;
+        // 2. Fetch User Role from Firestore to decide where to go
+        String? uid = AuthService().getCurrentUserId();
+        if (uid != null) {
+          try {
+            DocumentSnapshot userDoc = await FirebaseFirestore.instance
+                .collection('users')
+                .doc(uid)
+                .get();
 
-        // 3. ADMIN CHECK: Route based on email
-        if (_emailController.text.trim() == 'admin@courttime.com') {
-          // Go to Admin Panel
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const OwnerDashboard()),
-          );
-        } else {
-          // Go to User Home
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const PlayerDashboard()),
-          );
+            if (userDoc.exists) {
+              String role = userDoc['role'] ?? 'player'; // Default to player
+
+              if (!mounted) return;
+              setState(() => _isLoading = false);
+
+              // 3. Redirect based on Role
+              if (role == 'owner') {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const OwnerDashboard()),
+                );
+              } else {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const PlayerDashboard()),
+                );
+              }
+            } else {
+              // Fallback if user doc is missing, assume player
+               if (!mounted) return;
+               setState(() => _isLoading = false);
+               Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const PlayerDashboard()),
+                );
+            }
+          } catch (e) {
+            // Handle error fetching role
+            setState(() => _isLoading = false);
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text("Error fetching role: $e")),
+            );
+          }
         }
-        
       } else {
-        // 4. Show error message (e.g., Wrong password)
+        setState(() => _isLoading = false);
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(result ?? "Login failed"), 
-            backgroundColor: Colors.red
-          ),
+          SnackBar(content: Text(result ?? "Login failed"), backgroundColor: Colors.red),
         );
       }
     }
@@ -77,14 +96,19 @@ class _LoginScreenState extends State<LoginScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Icon / Logo
-                const Icon(Icons.lock_person, size: 80, color: Colors.blueAccent),
+                const Icon(Icons.sports_tennis, size: 80, color: Colors.blueAccent),
                 const SizedBox(height: 16),
                 
                 const Text(
-                  "Welcome Back!",
+                  "CourtTime+",
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.blueAccent),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  "Login to your account",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.grey),
                 ),
                 const SizedBox(height: 32),
 
@@ -96,48 +120,28 @@ class _LoginScreenState extends State<LoginScreen> {
                     border: OutlineInputBorder(),
                     prefixIcon: Icon(Icons.email),
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return "Please enter your email";
-                    }
-                    if (!value.contains('@')) {
-                      return "Please enter a valid email";
-                    }
-                    return null;
-                  },
+                  validator: (val) => val!.isEmpty ? "Enter email" : null,
                 ),
                 const SizedBox(height: 16),
 
                 // Password Field
                 TextFormField(
                   controller: _passwordController,
-                  obscureText: true, // Hide password text
+                  obscureText: true,
                   decoration: const InputDecoration(
                     labelText: "Password",
                     border: OutlineInputBorder(),
                     prefixIcon: Icon(Icons.lock),
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return "Please enter your password";
-                    }
-                    if (value.length < 6) {
-                      return "Password must be at least 6 characters";
-                    }
-                    return null;
-                  },
+                  validator: (val) => val!.isEmpty ? "Enter password" : null,
                 ),
                 const SizedBox(height: 24),
 
-                // Login Button
+                // LOGIN BUTTON
                 ElevatedButton(
                   onPressed: _isLoading ? null : _handleLogin,
                   child: _isLoading 
-                    ? const SizedBox(
-                        height: 20, 
-                        width: 20, 
-                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
-                      )
+                    ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white))
                     : const Text("LOGIN", style: TextStyle(fontSize: 16)),
                 ),
                 const SizedBox(height: 16),
@@ -146,7 +150,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text("Don't have an account?"),
+                    const Text("New here?"),
                     TextButton(
                       onPressed: () {
                         Navigator.push(
@@ -154,10 +158,14 @@ class _LoginScreenState extends State<LoginScreen> {
                           MaterialPageRoute(builder: (context) => const RegisterScreen()),
                         );
                       },
-                      child: const Text("Register"),
+                      child: const Text("Create Account"),
                     ),
                   ],
                 ),
+                
+                const SizedBox(height: 20),
+                const Divider(),
+                
               ],
             ),
           ),
