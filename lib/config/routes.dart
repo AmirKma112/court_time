@@ -1,13 +1,13 @@
-import 'package:court_time/owner/owner_dashboard.dart';
+import 'package:court_time/screens/owner/owner_dashboard.dart';
 import 'package:flutter/material.dart';
 
 // 1. Import all your screens here
 import '../screens/splash/splash_screen.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/auth/register_screen.dart';
-import '../screens/home/home_dashboard.dart';
-import '../screens/home/court_list_screen.dart';
-import '../screens/home/court_detail_screen.dart';
+import '../screens/player/player_dashboard.dart';
+import '../screens/player/court_list_screen.dart';
+import '../screens/player/court_detail_screen.dart';
 // import '../screens/admin/admin_manage_bookings.dart';
 // import '../screens/admin/admin_manage_courts.dart';
 
@@ -58,7 +58,7 @@ class AppRoutes {
 
       // --- Main User Flow ---
       case home:
-        return MaterialPageRoute(builder: (_) => const HomeDashboard());
+        return MaterialPageRoute(builder: (_) => const PlayerDashboard());
       
       case courtList:
         // Extract the argument (e.g., "Badminton" or "Futsal")
@@ -76,7 +76,7 @@ class AppRoutes {
 
       // --- Admin Flow ---
       case adminDashboard:
-        return MaterialPageRoute(builder: (_) => const AdminDashboard());
+        return MaterialPageRoute(builder: (_) => const OwnerDashboard());
       
       // case adminManageBookings:
       //   return MaterialPageRoute(builder: (_) => const AdminManageBookings());

@@ -1,7 +1,7 @@
-import 'package:court_time/owner/owner_dashboard.dart';
+import 'package:court_time/screens/owner/owner_dashboard.dart';
 import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
-import '../home/home_dashboard.dart';      // Redirect regular users here    // Redirect admin here
+import '../player/player_dashboard.dart';      // Redirect regular users here    // Redirect admin here
 import 'register_screen.dart';             // Redirect to sign up
 
 class LoginScreen extends StatefulWidget {
@@ -42,13 +42,13 @@ class _LoginScreenState extends State<LoginScreen> {
           // Go to Admin Panel
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => const AdminDashboard()),
+            MaterialPageRoute(builder: (context) => const OwnerDashboard()),
           );
         } else {
           // Go to User Home
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => const HomeDashboard()),
+            MaterialPageRoute(builder: (context) => const PlayerDashboard()),
           );
         }
         

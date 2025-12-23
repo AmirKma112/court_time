@@ -6,8 +6,8 @@ import 'court_list_screen.dart';
 // import '../profile/profile_screen.dart'; 
 // import '../profile/my_bookings_screen.dart';
 
-class HomeDashboard extends StatelessWidget {
-  const HomeDashboard({Key? key}) : super(key: key);
+class PlayerDashboard extends StatelessWidget {
+  const PlayerDashboard({Key? key}) : super(key: key);
 
   // Logout Function
   void _handleLogout(BuildContext context) async {
