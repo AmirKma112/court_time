@@ -22,7 +22,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
 
-  // ⭐️ NEW: State variable for Role Selection
+  // State variable for Role Selection
   String _selectedRole = 'player'; // Default role is Player
 
   void _handleRegister() async {
@@ -44,7 +44,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             'name': _nameController.text.trim(),
             'email': _emailController.text.trim(),
             'phone': _phoneController.text.trim(),
-            'role': _selectedRole, // ⭐️ Critical: Saves 'player' or 'owner'
+            'role': _selectedRole, // Saves 'player' or 'owner'
             'createdAt': FieldValue.serverTimestamp(),
           });
         }
@@ -100,59 +100,107 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const SizedBox(height: 30),
 
                 // Role Selection Dropdown
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: const Color.fromARGB(255, 136, 174, 238),
-                    border: Border.all(color: Colors.grey),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      value: _selectedRole,
-                      isExpanded: true,
-                      icon: const Icon(Icons.arrow_drop_down, color: Colors.blueAccent),
-                      items: const [
-                        DropdownMenuItem(
-                          value: 'player',
-                          child: Row(
+                // Role Selection - Custom Cards
+                Row(
+                  children: [
+                    // --- PLAYER CARD ---
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _selectedRole = 'player';
+                          });
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          decoration: BoxDecoration(
+                            // Active: Blue, Inactive: Grey/White
+                            color: _selectedRole == 'player' 
+                                ? Colors.blueAccent 
+                                : Colors.grey.shade100, 
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: _selectedRole == 'player' 
+                                  ? Colors.blueAccent 
+                                  : Colors.grey.shade300,
+                              width: 2,
+                            ),
+                          ),
+                          child: Column(
                             children: [
-                              Icon(Icons.person, color: Colors.blueAccent),
-                              SizedBox(width: 10),
-                              Text("Player"),
+                              Icon(
+                                Icons.person,
+                                size: 30,
+                                color: _selectedRole == 'player' 
+                                    ? Colors.white 
+                                    : Colors.grey,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                "Player",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: _selectedRole == 'player' 
+                                      ? Colors.white 
+                                      : Colors.grey,
+                                ),
+                              ),
                             ],
                           ),
                         ),
-                        DropdownMenuItem(
-                          value: 'owner',
-                          child: Row(
-                            children: [
-                              Icon(Icons.store, color: Colors.orange),
-                              SizedBox(width: 10),
-                              Text("Venue Owner"),
-                            ],
-                          ),
-                        ),
-                      ],
-                      onChanged: (String? newValue) {
-                        setState(() {
-                          _selectedRole = newValue!;
-                        });
-                      },
+                      ),
                     ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                
-                // Name Field
-                TextFormField(
-                  controller: _nameController,
-                  decoration: const InputDecoration(
-                    labelText: "Full Name",
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.person),
-                  ),
-                  validator: (val) => val!.isEmpty ? "Name is required" : null,
+                    
+                    const SizedBox(width: 16), // Gap between buttons
+
+                    // --- OWNER CARD ---
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _selectedRole = 'owner';
+                          });
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          decoration: BoxDecoration(
+                            // Active: Orange, Inactive: Grey/White
+                            color: _selectedRole == 'owner' 
+                                ? Colors.orange 
+                                : Colors.grey.shade100,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: _selectedRole == 'owner' 
+                                  ? Colors.orange 
+                                  : Colors.grey.shade300,
+                              width: 2,
+                            ),
+                          ),
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.store,
+                                size: 30,
+                                color: _selectedRole == 'owner' 
+                                    ? Colors.white 
+                                    : Colors.grey,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                "Venue Owner",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: _selectedRole == 'owner' 
+                                      ? Colors.white 
+                                      : Colors.grey,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 16),
 
