@@ -2,50 +2,49 @@ import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
 import '../auth/login_screen.dart';
 import 'court_list_screen.dart';
-// Note: We will create these two screens in the next steps
-// import '../profile/profile_screen.dart'; 
-// import '../profile/my_bookings_screen.dart';
+// import 'profile/my_bookings_screen.dart'; // We will create this next
 
 class PlayerDashboard extends StatelessWidget {
   const PlayerDashboard({Key? key}) : super(key: key);
 
   // Logout Function
   void _handleLogout(BuildContext context) async {
+    // 1. Sign out from Firebase
     await AuthService().signOut();
+    
     if (!context.mounted) return;
+    
+    // 2. Return to Login Screen (Remove all history)
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (context) => const LoginScreen()),
-      (route) => false, // Removes all previous routes from the stack
+      (route) => false, 
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    // Get current user email for display
+    final userEmail = AuthService().currentUser?.email ?? "Player";
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text("CourtTime+ Dashboard"),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.exit_to_app),
-            onPressed: () => _handleLogout(context),
-            tooltip: 'Logout',
-          ),
-        ],
+        title: const Text("CourtTime+"),
+        backgroundColor: Colors.blueAccent,
       ),
-      // Side Menu (Drawer) for Navigation
+      // SIDE DRAWER
       drawer: Drawer(
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
-            const UserAccountsDrawerHeader(
-              accountName: Text("Welcome Player"), // You can fetch real name later
-              accountEmail: Text("user@example.com"), // You can fetch real email later
-              currentAccountPicture: CircleAvatar(
+            UserAccountsDrawerHeader(
+              accountName: const Text("Welcome!"),
+              accountEmail: Text(userEmail),
+              currentAccountPicture: const CircleAvatar(
                 backgroundColor: Colors.white,
                 child: Icon(Icons.person, size: 40, color: Colors.blueAccent),
               ),
-              decoration: BoxDecoration(color: Colors.blueAccent),
+              decoration: const BoxDecoration(color: Colors.blueAccent),
             ),
             ListTile(
               leading: const Icon(Icons.home),
@@ -56,19 +55,19 @@ class PlayerDashboard extends StatelessWidget {
               leading: const Icon(Icons.history),
               title: const Text('My Bookings'),
               onTap: () {
-                // Navigator.push(context, MaterialPageRoute(builder: (context) => const MyBookingsScreen()));
-                Navigator.pop(context); // Placeholder until screen is created
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Coming next!")));
+                Navigator.pop(context); // Close drawer first
+                // Navigate to Booking History
+                //  Navigator.push(
+                //   context, 
+                //   MaterialPageRoute(builder: (context) => const MyBookingsScreen())
+                // );
               },
             ),
+            const Divider(),
             ListTile(
-              leading: const Icon(Icons.person),
-              title: const Text('Profile'),
-              onTap: () {
-                // Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfileScreen()));
-                Navigator.pop(context); // Placeholder until screen is created
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Coming next!")));
-              },
+              leading: const Icon(Icons.exit_to_app, color: Colors.red),
+              title: const Text('Logout', style: TextStyle(color: Colors.red)),
+              onTap: () => _handleLogout(context),
             ),
           ],
         ),
@@ -83,21 +82,35 @@ class PlayerDashboard extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.blueAccent.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.blueAccent.withOpacity(0.3)),
+                gradient: LinearGradient(
+                  colors: [Colors.blueAccent, Colors.blueAccent.shade700],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.blue.withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
-              child: Column(
+              child: const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
+                children: [
                   Text(
                     "Ready to play?",
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.blueAccent),
+                    style: TextStyle(
+                      fontSize: 24, 
+                      fontWeight: FontWeight.bold, 
+                      color: Colors.white
+                    ),
                   ),
                   SizedBox(height: 8),
                   Text(
-                    "Select a category below to view available courts and make a reservation.",
-                    style: TextStyle(fontSize: 14, color: Colors.black87),
+                    "Find the perfect court for your game today.",
+                    style: TextStyle(fontSize: 14, color: Colors.white70),
                   ),
                 ],
               ),
@@ -105,23 +118,24 @@ class PlayerDashboard extends StatelessWidget {
             const SizedBox(height: 24),
             
             const Text(
-              "Categories",
+              "Browse by Sport",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
 
-            // Grid Menu for Sports
+            // Sport Categories Grid
             Expanded(
               child: GridView.count(
-                crossAxisCount: 2, // 2 columns
+                crossAxisCount: 2, 
                 crossAxisSpacing: 16,
                 mainAxisSpacing: 16,
                 children: [
-                  _buildCategoryCard(
+                  _buildSportCard(
                     context, 
                     title: "Badminton", 
                     icon: Icons.sports_tennis, 
                     color: Colors.orangeAccent,
+                    imagePath: "assets/badminton.png", // Optional: Add assets later if needed
                     onTap: () {
                       Navigator.push(
                         context,
@@ -131,11 +145,12 @@ class PlayerDashboard extends StatelessWidget {
                       );
                     }
                   ),
-                  _buildCategoryCard(
+                  _buildSportCard(
                     context, 
                     title: "Futsal", 
                     icon: Icons.sports_soccer, 
                     color: Colors.greenAccent,
+                    imagePath: "assets/futsal.png",
                     onTap: () {
                       Navigator.push(
                         context,
@@ -154,24 +169,25 @@ class PlayerDashboard extends StatelessWidget {
     );
   }
 
-  // Helper widget to build the category buttons
-  Widget _buildCategoryCard(BuildContext context, {
+  // Helper Widget for Sport Cards
+  Widget _buildSportCard(BuildContext context, {
     required String title, 
     required IconData icon, 
     required Color color, 
-    required VoidCallback onTap
+    required VoidCallback onTap,
+    String? imagePath,
   }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withOpacity(0.2),
-              blurRadius: 5,
-              offset: const Offset(0, 3),
+              color: Colors.grey.withOpacity(0.1),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
             ),
           ],
         ),
@@ -179,14 +195,18 @@ class PlayerDashboard extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             CircleAvatar(
-              radius: 30,
-              backgroundColor: color.withOpacity(0.2),
-              child: Icon(icon, size: 30, color: color.withOpacity(0.8)),
+              radius: 35,
+              backgroundColor: color.withOpacity(0.1),
+              child: Icon(icon, size: 35, color: color),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             Text(
               title,
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            Text(
+              "Book Now",
+              style: TextStyle(fontSize: 12, color: Colors.grey[500]),
             ),
           ],
         ),
