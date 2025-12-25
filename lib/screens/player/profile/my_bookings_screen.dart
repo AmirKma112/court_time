@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../services/auth_service.dart';
 import '../../../models/booking_model.dart';
-//import '../../../widgets/booking_card.dart'; // Ensure this widget exists
+import '../../../widgets/booking_card.dart'; // Ensure this widget exists
 
 class MyBookingsScreen extends StatelessWidget {
   const MyBookingsScreen({super.key});
@@ -92,7 +92,7 @@ class MyBookingsScreen extends StatelessWidget {
             final booking = BookingModel.fromMap(data, docs[index].id);
 
             // 3. Use Reusable Widget
-            //return BookingCard(booking: booking);
+            return BookingCard(booking: booking);
           },
         );
       },
