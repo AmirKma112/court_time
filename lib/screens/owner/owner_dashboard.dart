@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
 import '../auth/login_screen.dart';
-// import 'owner_manage_bookings.dart'; // We will create this next
+import 'owner_manage_bookings.dart'; // We will create this next
 import 'owner_manage_courts.dart';
 
 class OwnerDashboard extends StatelessWidget {
@@ -65,10 +65,10 @@ class OwnerDashboard extends StatelessWidget {
                     color: Colors.orange,
                     count: "View & Approve", 
                     onTap: () {
-                      //  Navigator.push(
-                      //   context,
-                      //   MaterialPageRoute(builder: (context) => const OwnerManageBookings()),
-                      // );
+                       Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const OwnerManageBookings()),
+                      );
                     },
                   ),
 

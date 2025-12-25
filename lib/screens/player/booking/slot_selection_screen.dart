@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart'; // Ensure you have intl package or use basic string logic
 import 'package:court_time/models/court_model.dart';
-// import 'booking_summary.dart'; // We create this next
+import 'booking_summary.dart'; // We create this next
 
 class SlotSelectionScreen extends StatefulWidget {
   final CourtModel court;
@@ -39,16 +39,16 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
     }
 
     // Navigate to Summary Page
-    // Navigator.push(
-    //   context,
-    //   MaterialPageRoute(
-    //     builder: (context) => BookingSummaryScreen(
-    //       court: widget.court,
-    //       date: _selectedDate,
-    //       timeSlot: _selectedTime!,
-    //     ),
-    //   ),
-    // );
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => BookingSummaryScreen(
+          court: widget.court,
+          date: _selectedDate,
+          timeSlot: _selectedTime!,
+        ),
+      ),
+    );
   }
 
   @override
