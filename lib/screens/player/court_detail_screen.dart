@@ -158,12 +158,12 @@ class CourtDetailScreen extends StatelessWidget {
                   ),
                   onPressed: () {
                     // Navigate to Slot Selection
-                    // Navigator.push(
-                    //   context,
-                    //   MaterialPageRoute(
-                    //     builder: (context) => SlotSelectionScreen(court: court),
-                    //   ),
-                    // );
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => SlotSelectionScreen(court: court),
+                      ),
+                    );
                   },
                   child: const Text(
                     "BOOK NOW", 
