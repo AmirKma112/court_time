@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart'; // To fetch user role
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../services/auth_service.dart';
-import '../player/player_dashboard.dart'; // Redirect Player here
-import '../owner/owner_dashboard.dart';   // Redirect Owner here
+import '../../widgets/custom_input.dart';  // Import the Input Widget
+import '../../widgets/custom_button.dart'; // Import the Button Widget
+import '../player/player_dashboard.dart';
+import '../owner/owner_dashboard.dart';
 import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -20,73 +22,78 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
 
   void _handleLogin() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() => _isLoading = true);
+    if (!_formKey.currentState!.validate()) return;
 
-      // 1. Auth Login (Check email/password validity)
-      String? result = await AuthService().login(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
-      );
+    setState(() => _isLoading = true);
 
-      if (result == 'Success') {
-        // 2. Fetch User Role from Firestore to decide where to go
-        String? uid = AuthService().getCurrentUserId();
-        if (uid != null) {
-          try {
-            DocumentSnapshot userDoc = await FirebaseFirestore.instance
-                .collection('users')
-                .doc(uid)
-                .get();
+    // 1. Auth Login
+    String? result = await AuthService().login(
+      email: _emailController.text.trim(),
+      password: _passwordController.text.trim(),
+    );
 
-            if (userDoc.exists) {
-              String role = userDoc['role'] ?? 'player'; // Default to player
+    if (result == 'Success') {
+      // 2. Fetch User Role
+      String? uid = AuthService().getCurrentUserId();
+      if (uid != null) {
+        try {
+          DocumentSnapshot userDoc = await FirebaseFirestore.instance
+              .collection('users')
+              .doc(uid)
+              .get();
 
-              if (!mounted) return;
-              setState(() => _isLoading = false);
+          if (userDoc.exists) {
+            String role = userDoc['role'] ?? 'player'; // Default to player
 
-              // 3. Redirect based on Role
-              if (role == 'owner') {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => const OwnerDashboard()),
-                );
-              } else {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => const PlayerDashboard()),
-                );
-              }
-            } else {
-              // Fallback if user doc is missing, assume player
-               if (!mounted) return;
-               setState(() => _isLoading = false);
-               Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => const PlayerDashboard()),
-                );
-            }
-          } catch (e) {
-            // Handle error fetching role
+            if (!mounted) return;
             setState(() => _isLoading = false);
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text("Error fetching role: $e")),
-            );
+
+            // 3. Redirect based on Role
+            if (role == 'owner') {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const OwnerDashboard()),
+              );
+            } else {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const PlayerDashboard()),
+              );
+            }
+          } else {
+             // Fallback: If no user doc exists, assume player
+             if (!mounted) return;
+             setState(() => _isLoading = false);
+             Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const PlayerDashboard()),
+              );
           }
+        } catch (e) {
+          if (!mounted) return;
+          setState(() => _isLoading = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Error fetching role: $e")),
+          );
         }
-      } else {
-        setState(() => _isLoading = false);
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(result ?? "Login failed"), backgroundColor: Colors.red),
-        );
       }
+    } else {
+      // Login Failed
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result ?? "Login failed"), 
+          backgroundColor: Colors.red
+        ),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
@@ -96,61 +103,64 @@ class _LoginScreenState extends State<LoginScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                // 1. LOGO & TITLE
                 const Icon(Icons.sports_tennis, size: 80, color: Colors.blueAccent),
                 const SizedBox(height: 16),
-                
                 const Text(
                   "CourtTime+",
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.blueAccent),
+                  style: TextStyle(
+                    fontSize: 32, 
+                    fontWeight: FontWeight.bold, 
+                    color: Colors.blueAccent
+                  ),
                 ),
                 const SizedBox(height: 8),
-                const Text(
-                  "Login to your account",
+                Text(
+                  "Welcome back! Please login.",
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.grey),
+                  style: TextStyle(color: Colors.grey[600], fontSize: 16),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 40),
 
-                // Email Field
-                TextFormField(
+                // 2. EMAIL INPUT
+                CustomInput(
+                  label: "Email Address",
+                  icon: Icons.email,
                   controller: _emailController,
-                  decoration: const InputDecoration(
-                    labelText: "Email",
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.email),
-                  ),
-                  validator: (val) => val!.isEmpty ? "Enter email" : null,
+                  keyboardType: TextInputType.emailAddress,
+                  validator: (val) {
+                    if (val == null || val.isEmpty) return "Please enter your email";
+                    if (!val.contains('@')) return "Invalid email address";
+                    return null;
+                  },
                 ),
-                const SizedBox(height: 16),
 
-                // Password Field
-                TextFormField(
+                // 3. PASSWORD INPUT
+                CustomInput(
+                  label: "Password",
+                  icon: Icons.lock,
                   controller: _passwordController,
-                  obscureText: true,
-                  decoration: const InputDecoration(
-                    labelText: "Password",
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.lock),
-                  ),
-                  validator: (val) => val!.isEmpty ? "Enter password" : null,
+                  isPassword: true,
+                  validator: (val) => val!.isEmpty ? "Please enter your password" : null,
                 ),
+
                 const SizedBox(height: 24),
 
-                // LOGIN BUTTON
-                ElevatedButton(
-                  onPressed: _isLoading ? null : _handleLogin,
-                  child: _isLoading 
-                    ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white))
-                    : const Text("LOGIN", style: TextStyle(fontSize: 16)),
+                // 4. LOGIN BUTTON (Using CustomButton)
+                CustomButton(
+                  text: "LOGIN",
+                  isLoading: _isLoading,
+                  onPressed: _handleLogin,
                 ),
-                const SizedBox(height: 16),
+                
+                const SizedBox(height: 24),
 
-                // Register Link
+                // 5. REGISTER LINK
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text("Don't have an Acccount?"),
+                    Text("Don't have an account?", style: TextStyle(color: Colors.grey[600])),
                     TextButton(
                       onPressed: () {
                         Navigator.push(
@@ -158,13 +168,10 @@ class _LoginScreenState extends State<LoginScreen> {
                           MaterialPageRoute(builder: (context) => const RegisterScreen()),
                         );
                       },
-                      child: const Text("Sign Up"),
+                      child: const Text("Create Account", style: TextStyle(fontWeight: FontWeight.bold)),
                     ),
                   ],
                 ),
-                
-                const SizedBox(height: 20),
-                
               ],
             ),
           ),
