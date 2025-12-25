@@ -117,7 +117,7 @@ class DatabaseService {
       DocumentReference docRef = await _courtsRef.add(court.toMap());
       
       // Optional: If you want to store the ID inside the document fields too
-      // await docRef.update({'id': docRef.id}); 
+      await docRef.update({'id': docRef.id}); 
     }
   }
 }

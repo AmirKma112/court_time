@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
 import '../auth/login_screen.dart';
 import 'court_list_screen.dart';
-// import 'profile/my_bookings_screen.dart'; // We will create this next
+import 'profile/my_bookings_screen.dart'; // We will create this next
 
 class PlayerDashboard extends StatelessWidget {
   const PlayerDashboard({Key? key}) : super(key: key);
@@ -57,10 +57,10 @@ class PlayerDashboard extends StatelessWidget {
               onTap: () {
                 Navigator.pop(context); // Close drawer first
                 // Navigate to Booking History
-                //  Navigator.push(
-                //   context, 
-                //   MaterialPageRoute(builder: (context) => const MyBookingsScreen())
-                // );
+                 Navigator.push(
+                  context, 
+                  MaterialPageRoute(builder: (context) => const MyBookingsScreen())
+                );
               },
             ),
             const Divider(),
