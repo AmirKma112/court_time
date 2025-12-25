@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../services/auth_service.dart';
-import '../player/player_dashboard.dart'; // Formerly home_dashboard.dart
-import '../owner/owner_dashboard.dart';   // Formerly admin_dashboard.dart
+import '../../widgets/custom_input.dart';  // Import CustomInput
+import '../../widgets/custom_button.dart'; // Import CustomButton
+import '../player/player_dashboard.dart';
+import '../owner/owner_dashboard.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -49,9 +51,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
           });
         }
 
-        setState(() => _isLoading = false);
-
         if (!mounted) return;
+        setState(() => _isLoading = false);
 
         // 3. Smart Redirect based on Role
         if (_selectedRole == 'owner') {
@@ -82,8 +83,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Define active colors based on role
+    final Color activeColor = _selectedRole == 'owner' ? Colors.orange : Colors.blueAccent;
+
     return Scaffold(
-      appBar: AppBar(title: const Text("Create Account")),
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        title: const Text("Create Account"),
+        backgroundColor: activeColor,
+      ),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
@@ -93,56 +101,45 @@ class _RegisterScreenState extends State<RegisterScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const Text(
-                  "Welcome to CourtTime+",
+                  "Join CourtTime+",
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
                 ),
-                const SizedBox(height: 30),
+                const SizedBox(height: 8),
+                Text(
+                  "Select your role to get started",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.grey[600], fontSize: 16),
+                ),
+                const SizedBox(height: 24),
 
-                // Role Selection Dropdown
-                // Role Selection - Custom Cards
+                // --- ROLE SELECTION CARDS ---
                 Row(
                   children: [
-                    // --- PLAYER CARD ---
+                    // PLAYER CARD
                     Expanded(
                       child: GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _selectedRole = 'player';
-                          });
-                        },
-                        child: Container(
+                        onTap: () => setState(() => _selectedRole = 'player'),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           decoration: BoxDecoration(
-                            // Active: Blue, Inactive: Grey/White
-                            color: _selectedRole == 'player' 
-                                ? Colors.blueAccent 
-                                : Colors.grey.shade100, 
+                            color: _selectedRole == 'player' ? Colors.blueAccent : Colors.grey[100],
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: _selectedRole == 'player' 
-                                  ? Colors.blueAccent 
-                                  : Colors.grey.shade300,
+                              color: _selectedRole == 'player' ? Colors.blueAccent : Colors.grey.shade300,
                               width: 2,
                             ),
                           ),
                           child: Column(
                             children: [
-                              Icon(
-                                Icons.person,
-                                size: 30,
-                                color: _selectedRole == 'player' 
-                                    ? Colors.white 
-                                    : Colors.grey,
-                              ),
+                              Icon(Icons.person, size: 30, color: _selectedRole == 'player' ? Colors.white : Colors.grey),
                               const SizedBox(height: 8),
                               Text(
                                 "Player",
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
-                                  color: _selectedRole == 'player' 
-                                      ? Colors.white 
-                                      : Colors.grey,
+                                  color: _selectedRole == 'player' ? Colors.white : Colors.grey,
                                 ),
                               ),
                             ],
@@ -151,48 +148,32 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                     ),
                     
-                    const SizedBox(width: 16), // Gap between buttons
+                    const SizedBox(width: 16),
 
-                    // --- OWNER CARD ---
+                    // OWNER CARD
                     Expanded(
                       child: GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _selectedRole = 'owner';
-                          });
-                        },
-                        child: Container(
+                        onTap: () => setState(() => _selectedRole = 'owner'),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           decoration: BoxDecoration(
-                            // Active: Orange, Inactive: Grey/White
-                            color: _selectedRole == 'owner' 
-                                ? Colors.orange 
-                                : Colors.grey.shade100,
+                            color: _selectedRole == 'owner' ? Colors.orange : Colors.grey[100],
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: _selectedRole == 'owner' 
-                                  ? Colors.orange 
-                                  : Colors.grey.shade300,
+                              color: _selectedRole == 'owner' ? Colors.orange : Colors.grey.shade300,
                               width: 2,
                             ),
                           ),
                           child: Column(
                             children: [
-                              Icon(
-                                Icons.store,
-                                size: 30,
-                                color: _selectedRole == 'owner' 
-                                    ? Colors.white 
-                                    : Colors.grey,
-                              ),
+                              Icon(Icons.store, size: 30, color: _selectedRole == 'owner' ? Colors.white : Colors.grey),
                               const SizedBox(height: 8),
                               Text(
                                 "Venue Owner",
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
-                                  color: _selectedRole == 'owner' 
-                                      ? Colors.white 
-                                      : Colors.grey,
+                                  color: _selectedRole == 'owner' ? Colors.white : Colors.grey,
                                 ),
                               ),
                             ],
@@ -202,75 +183,69 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 30),
 
-                // Phone Field
-                TextFormField(
+                // 1. FULL NAME INPUT (Added this as it was missing)
+                CustomInput(
+                  label: "Full Name",
+                  icon: Icons.badge,
+                  controller: _nameController,
+                  validator: (val) => val!.isEmpty ? "Name is required" : null,
+                ),
+
+                // 2. PHONE INPUT
+                CustomInput(
+                  label: "Phone Number",
+                  icon: Icons.phone,
                   controller: _phoneController,
                   keyboardType: TextInputType.phone,
-                  decoration: const InputDecoration(
-                    labelText: "Phone Number",
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.phone),
-                  ),
                   validator: (val) => val!.isEmpty ? "Phone is required" : null,
                 ),
-                const SizedBox(height: 16),
 
-                // Email Field
-                TextFormField(
+                // 3. EMAIL INPUT
+                CustomInput(
+                  label: "Email Address",
+                  icon: Icons.email,
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(
-                    labelText: "Email",
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.email),
-                  ),
-                  validator: (val) => !val!.contains('@') ? "Invalid email" : null,
+                  validator: (val) {
+                    if (val == null || !val.contains('@')) return "Invalid email";
+                    return null;
+                  },
                 ),
-                const SizedBox(height: 16),
 
-                // Password Field
-                TextFormField(
+                // 4. PASSWORD INPUT
+                CustomInput(
+                  label: "Password",
+                  icon: Icons.lock,
                   controller: _passwordController,
-                  obscureText: true,
-                  decoration: const InputDecoration(
-                    labelText: "Password",
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.lock),
-                  ),
+                  isPassword: true,
                   validator: (val) => val!.length < 6 ? "Min 6 characters" : null,
                 ),
-                const SizedBox(height: 16),
 
-                // Confirm Password Field
-                TextFormField(
+                // 5. CONFIRM PASSWORD INPUT
+                CustomInput(
+                  label: "Confirm Password",
+                  icon: Icons.lock_outline,
                   controller: _confirmPasswordController,
-                  obscureText: true,
-                  decoration: const InputDecoration(
-                    labelText: "Confirm Password",
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.lock_outline),
-                  ),
+                  isPassword: true,
                   validator: (val) {
                     if (val != _passwordController.text) return "Passwords do not match";
                     return null;
                   },
                 ),
+
                 const SizedBox(height: 24),
 
-                // Register Button
-                ElevatedButton(
-                  onPressed: _isLoading ? null : _handleRegister,
-                  child: _isLoading
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : Text(
-                          _selectedRole == 'owner' 
-                              ? "REGISTER AS OWNER" 
-                              : "REGISTER AS PLAYER",
-                          style: const TextStyle(fontSize: 16),
-                        ),
+                // 6. REGISTER BUTTON (Dynamic Color)
+                CustomButton(
+                  text: _selectedRole == 'owner' ? "REGISTER AS OWNER" : "REGISTER AS PLAYER",
+                  isLoading: _isLoading,
+                  backgroundColor: activeColor, // Changes based on role
+                  onPressed: _handleRegister,
                 ),
+                
+                const SizedBox(height: 24),
               ],
             ),
           ),
