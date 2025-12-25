@@ -103,4 +103,33 @@ class DatabaseService {
       }).toList();
     });
   }
+
+  // 9. CHECK AVAILABILITY (Prevent Double Booking)
+  Stream<List<String>> getBookedSlots(String courtId, DateTime date) {
+    // 1. Calculate Start and End of the selected day
+    final startOfDay = DateTime(date.year, date.month, date.day, 0, 0, 0);
+    final endOfDay = DateTime(date.year, date.month, date.day, 23, 59, 59);
+
+    return _bookingsRef
+        .where('courtId', isEqualTo: courtId)
+        .where('bookingDate', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
+        .where('bookingDate', isLessThanOrEqualTo: Timestamp.fromDate(endOfDay))
+        .snapshots()
+        .map((snapshot) {
+      final List<String> bookedTimes = [];
+      
+      for (var doc in snapshot.docs) {
+        final data = doc.data() as Map<String, dynamic>;
+        final status = data['status'] ?? '';
+        final time = data['timeSlot'] ?? '';
+
+        // Only block the slot if it is NOT Rejected or Cancelled
+        // (Pending and Approved bookings block the slot)
+        if (status != 'Rejected' && status != 'Cancelled') {
+          bookedTimes.add(time);
+        }
+      }
+      return bookedTimes;
+    });
+  }
 }

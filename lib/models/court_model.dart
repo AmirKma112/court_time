@@ -1,5 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 class CourtModel {
   final String id;
   final String ownerId;       // Links this court to a specific Owner
@@ -50,7 +48,7 @@ class CourtModel {
       type: map['type'] ?? 'Badminton',
       pricePerHour: (map['pricePerHour'] ?? 0).toDouble(),
       location: map['location'] ?? '',
-      imageUrl: map['imageUrl'] ?? 'assets/images/placeholder.png',
+      imageUrl: map['imageUrl'] ?? 'https://placehold.co/150x150.png',
       description: map['description'] ?? '',
       amenities: List<String>.from(map['amenities'] ?? []),
     );

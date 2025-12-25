@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart'; // Ensure you have intl package or use basic string logic
+import 'package:intl/intl.dart';
 import 'package:court_time/models/court_model.dart';
-import 'booking_summary.dart'; // We create this next
+import 'package:court_time/services/database_service.dart';
+import 'booking_summary.dart';
 
 class SlotSelectionScreen extends StatefulWidget {
   final CourtModel court;
@@ -13,18 +14,15 @@ class SlotSelectionScreen extends StatefulWidget {
 }
 
 class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
-  // State Variables
   DateTime _selectedDate = DateTime.now();
   String? _selectedTime;
 
-  // Generate next 7 days for the calendar strip
   final List<DateTime> _nextDays = List.generate(
     7, 
     (index) => DateTime.now().add(Duration(days: index))
   );
 
-  // Hardcoded Time Slots (In a real app, you'd filter out booked ones)
-  final List<String> _timeSlots = [
+  final List<String> _allTimeSlots = [
     "09:00 AM", "10:00 AM", "11:00 AM", 
     "02:00 PM", "03:00 PM", "04:00 PM", 
     "05:00 PM", "08:00 PM", "09:00 PM"
@@ -38,7 +36,6 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
       return;
     }
 
-    // Navigate to Summary Page
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -61,7 +58,7 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 1. Header: Court Info
+          // 1. Header Info
           Container(
             padding: const EdgeInsets.all(16),
             color: Colors.white,
@@ -72,7 +69,7 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
                   child: Image.network(
                     widget.court.imageUrl,
                     width: 60, height: 60, fit: BoxFit.cover,
-                    errorBuilder: (c,e,s) => Container(color: Colors.grey[200], width: 60, height: 60),
+                    errorBuilder: (c,e,s) => Container(color: Colors.grey[200], width: 60),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -83,10 +80,7 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
                       widget.court.name,
                       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                     ),
-                    Text(
-                      "RM ${widget.court.pricePerHour}/hour",
-                      style: const TextStyle(color: Colors.blueAccent),
-                    ),
+                    Text("RM ${widget.court.pricePerHour}/hour"),
                   ],
                 ),
               ],
@@ -94,7 +88,7 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
           ),
           const Divider(height: 1),
 
-          // 2. Date Selection (Horizontal Strip)
+          // 2. Date Selection
           const Padding(
             padding: EdgeInsets.all(16.0),
             child: Text("Select Date", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
@@ -112,7 +106,12 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
                     date.month == _selectedDate.month;
 
                 return GestureDetector(
-                  onTap: () => setState(() => _selectedDate = date),
+                  onTap: () {
+                    setState(() {
+                      _selectedDate = date;
+                      _selectedTime = null; // Reset time when date changes
+                    });
+                  },
                   child: Container(
                     width: 60,
                     margin: const EdgeInsets.only(right: 12),
@@ -127,7 +126,7 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          DateFormat('EEE').format(date), // e.g., "Mon"
+                          DateFormat('EEE').format(date), 
                           style: TextStyle(
                             color: isSelected ? Colors.white : Colors.grey,
                             fontSize: 12,
@@ -150,51 +149,76 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
             ),
           ),
 
-          // 3. Time Selection (Grid of Chips)
+          // 3. Time Selection (Dynamic Stream)
           const Padding(
             padding: EdgeInsets.all(16.0),
             child: Text("Select Time", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           ),
+          
           Expanded(
-            child: GridView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                childAspectRatio: 2.5,
-                crossAxisSpacing: 10,
-                mainAxisSpacing: 10,
-              ),
-              itemCount: _timeSlots.length,
-              itemBuilder: (context, index) {
-                final time = _timeSlots[index];
-                final isSelected = _selectedTime == time;
+            child: StreamBuilder<List<String>>(
+              // 🔴 THIS IS THE MAGIC PART
+              // It listens to the database for occupied slots on this specific day
+              stream: DatabaseService().getBookedSlots(widget.court.id, _selectedDate),
+              builder: (context, snapshot) {
+                
+                // Determine which slots are taken
+                final bookedSlots = snapshot.data ?? [];
 
-                return ChoiceChip(
-                  label: Text(time),
-                  selected: isSelected,
-                  selectedColor: Colors.blueAccent,
-                  labelStyle: TextStyle(
-                    color: isSelected ? Colors.white : Colors.black,
-                    fontSize: 12
+                return GridView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3,
+                    childAspectRatio: 2.5,
+                    crossAxisSpacing: 10,
+                    mainAxisSpacing: 10,
                   ),
-                  onSelected: (selected) {
-                    setState(() => _selectedTime = selected ? time : null);
+                  itemCount: _allTimeSlots.length,
+                  itemBuilder: (context, index) {
+                    final time = _allTimeSlots[index];
+                    
+                    // Logic: Is this slot already booked?
+                    final isBooked = bookedSlots.contains(time);
+                    final isSelected = _selectedTime == time;
+
+                    return ChoiceChip(
+                      label: Text(isBooked ? "Booked" : time),
+                      // Grey out if booked, Blue if selected, White if available
+                      selected: isSelected,
+                      selectedColor: Colors.blueAccent,
+                      backgroundColor: isBooked ? Colors.grey[300] : Colors.grey[100],
+                      labelStyle: TextStyle(
+                        // Grey text if booked
+                        color: isBooked 
+                            ? Colors.grey 
+                            : (isSelected ? Colors.white : Colors.black),
+                        fontSize: 12,
+                        decoration: isBooked ? TextDecoration.lineThrough : null,
+                      ),
+                      // Disable tap if booked
+                      onSelected: isBooked ? null : (selected) {
+                        setState(() => _selectedTime = selected ? time : null);
+                      },
+                    );
                   },
                 );
               },
             ),
           ),
 
-          // 4. Bottom Button
+          // 4. Continue Button
           Container(
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(color: Colors.white, boxShadow: [BoxShadow(blurRadius: 5, color: Colors.black12)]),
+            decoration: const BoxDecoration(
+              color: Colors.white, 
+              boxShadow: [BoxShadow(blurRadius: 5, color: Colors.black12)]
+            ),
             child: SafeArea(
               child: SizedBox(
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
-                  onPressed: _proceedToSummary,
+                  onPressed: _selectedTime == null ? null : _proceedToSummary,
                   style: ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent),
                   child: const Text("CONTINUE", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 ),
