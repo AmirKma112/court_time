@@ -14,12 +14,10 @@ class DatabaseService {
   // =======================================================================
 
   // 1. SAVE COURT (Create or Update)
-  // Logic: If isEditing is true, we update. If false, we add new.
   Future<void> saveCourt(CourtModel court, {required bool isEditing}) async {
     if (isEditing) {
       await _courtsRef.doc(court.id).update(court.toMap());
     } else {
-      // Add to Firestore and let it generate a unique ID
       await _courtsRef.add(court.toMap());
     }
   }
@@ -30,7 +28,6 @@ class DatabaseService {
   }
 
   // 3. GET OWNER COURTS (Stream)
-  // Security: Only fetches courts belonging to the specific ownerId
   Stream<List<CourtModel>> getOwnerCourts(String ownerId) {
     return _courtsRef
         .where('ownerId', isEqualTo: ownerId)
@@ -42,15 +39,27 @@ class DatabaseService {
     });
   }
 
+  // 4. GET COURT BY ID (New: Needed for Rescheduling)
+  Future<CourtModel?> getCourtById(String courtId) async {
+    try {
+      final doc = await _courtsRef.doc(courtId).get();
+      if (doc.exists) {
+        return CourtModel.fromMap(doc.data() as Map<String, dynamic>, doc.id);
+      }
+    } catch (e) {
+      // Handle error or return null
+    }
+    return null;
+  }
+
   // =======================================================================
   // 🏸 PUBLIC COURT DATA (For Players)
   // =======================================================================
 
-  // 4. GET ALL COURTS BY SPORT (Stream)
-  // Used in CourtListScreen to show all available courts
+  // 5. GET ALL COURTS BY SPORT (Stream)
   Stream<List<CourtModel>> getCourts(String sportType) {
     return _courtsRef
-        .where('type', isEqualTo: sportType) // Filter by 'Badminton' or 'Futsal'
+        .where('type', isEqualTo: sportType)
         .snapshots()
         .map((snapshot) {
       return snapshot.docs.map((doc) {
@@ -63,38 +72,15 @@ class DatabaseService {
   // 📅 BOOKING MANAGEMENT
   // =======================================================================
 
-  // 5. CREATE BOOKING (Player Action)
+  // 6. CREATE BOOKING (Player Action)
   Future<void> createBooking(BookingModel booking) async {
     await _bookingsRef.add(booking.toMap());
   }
 
-  // 6. GET OWNER BOOKINGS (Owner Action)
-  // Fetches bookings only for courts owned by this specific owner
+  // 7. GET OWNER BOOKINGS (Owner Action)
   Stream<List<BookingModel>> getOwnerBookings(String ownerId) {
     return _bookingsRef
         .where('ownerId', isEqualTo: ownerId)
-        .orderBy('createdAt', descending: true) // Newest first
-        .snapshots()
-        .map((snapshot) {
-      return snapshot.docs.map((doc) {
-        return BookingModel.fromMap(doc.data() as Map<String, dynamic>, doc.id);
-      }).toList();
-    });
-  }
-
-  // 7. UPDATE BOOKING STATUS (Owner Action)
-  // Used to Approve or Reject a booking
-  Future<void> updateBookingStatus(String bookingId, String newStatus) async {
-    await _bookingsRef.doc(bookingId).update({
-      'status': newStatus,
-    });
-  }
-
-  // 8. GET PLAYER BOOKINGS (Optional Helper)
-  // If you want to clean up MyBookingsScreen later, you can use this
-  Stream<List<BookingModel>> getPlayerBookings(String userId) {
-    return _bookingsRef
-        .where('userId', isEqualTo: userId)
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) {
@@ -104,14 +90,30 @@ class DatabaseService {
     });
   }
 
-  // 9. CHECK AVAILABILITY (Prevent Double Booking)
+  // 8. UPDATE BOOKING STATUS (Owner Action - Approve/Reject)
+  // Also used for Cancelling (Player Action)
+  Future<void> updateBookingStatus(String bookingId, String newStatus) async {
+    await _bookingsRef.doc(bookingId).update({
+      'status': newStatus,
+    });
+  }
+
+  // 9. RESCHEDULE BOOKING (New: Update Date & Time)
+  Future<void> rescheduleBooking(String bookingId, DateTime newDate, String newTime) async {
+    await _bookingsRef.doc(bookingId).update({
+      'bookingDate': Timestamp.fromDate(newDate),
+      'timeSlot': newTime,
+      'status': 'Pending', // Always reset to Pending so Owner can review the new time
+    });
+  }
+
+  // 10. CHECK AVAILABILITY (Prevent Double Booking)
   Stream<List<String>> getBookedSlots(String courtId, DateTime date) {
-    // 1. Calculate Start and End of the selected day
     final startOfDay = DateTime(date.year, date.month, date.day, 0, 0, 0);
     final endOfDay = DateTime(date.year, date.month, date.day, 23, 59, 59);
 
     return _bookingsRef
-        .where('courtId', isEqualTo: courtId)
+        .where('courtId', isEqualTo: courtId) // 🔒 Critical Filter
         .where('bookingDate', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
         .where('bookingDate', isLessThanOrEqualTo: Timestamp.fromDate(endOfDay))
         .snapshots()
@@ -123,9 +125,9 @@ class DatabaseService {
         final status = data['status'] ?? '';
         final time = data['timeSlot'] ?? '';
 
-        // Only block the slot if it is NOT Rejected or Cancelled
-        // (Pending and Approved bookings block the slot)
-        if (status != 'Rejected' && status != 'Cancelled') {
+        // Only block slot if it is active (Pending, Approved, Confirmed)
+        // Rejected/Cancelled/Completed slots become free again.
+        if (status != 'Rejected' && status != 'Cancelled' && status != 'Completed') {
           bookedTimes.add(time);
         }
       }

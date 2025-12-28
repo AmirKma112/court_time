@@ -6,8 +6,13 @@ import 'booking_summary.dart';
 
 class SlotSelectionScreen extends StatefulWidget {
   final CourtModel court;
+  final String? bookingId; // 🆕 Optional: If provided, we are in "Reschedule Mode"
 
-  const SlotSelectionScreen({Key? key, required this.court}) : super(key: key);
+  const SlotSelectionScreen({
+    Key? key, 
+    required this.court, 
+    this.bookingId
+  }) : super(key: key);
 
   @override
   State<SlotSelectionScreen> createState() => _SlotSelectionScreenState();
@@ -18,8 +23,7 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
   String? _selectedTime;
 
   final List<DateTime> _nextDays = List.generate(
-    7, 
-    (index) => DateTime.now().add(Duration(days: index))
+    7, (index) => DateTime.now().add(Duration(days: index))
   );
 
   final List<String> _allTimeSlots = [
@@ -28,64 +32,72 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
     "05:00 PM", "08:00 PM", "09:00 PM"
   ];
 
-  // 🕒 HELPER: Check if a time slot is in the past
   bool _isTimeSlotInPast(String timeSlot) {
     final now = DateTime.now();
-    
-    // 1. If selected date is in the future (tomorrow+), the slot is NOT in the past.
-    if (_selectedDate.year > now.year || 
-        _selectedDate.month > now.month || 
-        _selectedDate.day > now.day) {
+    if (_selectedDate.year > now.year || _selectedDate.month > now.month || _selectedDate.day > now.day) {
       return false; 
     }
-
-    // 2. If selected date is TODAY, we must check the hour.
     try {
-      // Parse "09:00 AM" to get the hour
-      // We assume the format is strictly "hh:mm a"
       DateFormat format = DateFormat("hh:mm a"); 
       DateTime slotTime = format.parse(timeSlot);
-
-      // Create a full DateTime object for this slot today
       DateTime slotDateTime = DateTime(
-        _selectedDate.year,
-        _selectedDate.month,
-        _selectedDate.day,
-        slotTime.hour,
-        slotTime.minute,
+        _selectedDate.year, _selectedDate.month, _selectedDate.day,
+        slotTime.hour, slotTime.minute,
       );
-
-      // Return true if the slot is before right now
       return slotDateTime.isBefore(now);
     } catch (e) {
-      return false; // Safety fallback
+      return false; 
     }
   }
 
-  void _proceedToSummary() {
+  // 🆕 Logic to Handle "Update" instead of "Create"
+  void _handleAction() async {
     if (_selectedTime == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please select a time slot")),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please select a time slot")));
       return;
     }
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => BookingSummaryScreen(
-          court: widget.court,
-          date: _selectedDate,
-          timeSlot: _selectedTime!,
+
+    // A. RESCHEDULE MODE
+    if (widget.bookingId != null) {
+      try {
+        await DatabaseService().rescheduleBooking(
+          widget.bookingId!, 
+          _selectedDate, 
+          _selectedTime!
+        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Booking Rescheduled!")));
+          Navigator.pop(context); // Go back to My Bookings
+        }
+      } catch (e) {
+        if (mounted) {
+           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e")));
+        }
+      }
+    } 
+    // B. NORMAL BOOKING MODE
+    else {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => BookingSummaryScreen(
+            court: widget.court,
+            date: _selectedDate,
+            timeSlot: _selectedTime!,
+          ),
         ),
-      ),
-    );
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    // Change Title based on mode
+    final isReschedule = widget.bookingId != null;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Select Slot"),
+        title: Text(isReschedule ? "Reschedule Booking" : "Select Slot"),
         backgroundColor: Colors.blueAccent,
       ),
       body: Column(
@@ -109,10 +121,7 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      widget.court.name,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                    ),
+                    Text(widget.court.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                     Text("RM ${widget.court.pricePerHour}/hour"),
                   ],
                 ),
@@ -134,46 +143,23 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
               itemCount: _nextDays.length,
               itemBuilder: (context, index) {
                 final date = _nextDays[index];
-                final isSelected = 
-                    date.day == _selectedDate.day && 
-                    date.month == _selectedDate.month;
+                final isSelected = date.day == _selectedDate.day && date.month == _selectedDate.month;
 
                 return GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _selectedDate = date;
-                      _selectedTime = null; 
-                    });
-                  },
+                  onTap: () => setState(() { _selectedDate = date; _selectedTime = null; }),
                   child: Container(
-                    width: 60,
-                    margin: const EdgeInsets.only(right: 12),
+                    width: 60, margin: const EdgeInsets.only(right: 12),
                     decoration: BoxDecoration(
                       color: isSelected ? Colors.blueAccent : Colors.white,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: isSelected ? Colors.blueAccent : Colors.grey.shade300
-                      ),
+                      border: Border.all(color: isSelected ? Colors.blueAccent : Colors.grey.shade300),
                     ),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text(
-                          DateFormat('EEE').format(date), 
-                          style: TextStyle(
-                            color: isSelected ? Colors.white : Colors.grey,
-                            fontSize: 12,
-                          ),
-                        ),
+                        Text(DateFormat('EEE').format(date), style: TextStyle(color: isSelected ? Colors.white : Colors.grey, fontSize: 12)),
                         const SizedBox(height: 4),
-                        Text(
-                          date.day.toString(),
-                          style: TextStyle(
-                            color: isSelected ? Colors.white : Colors.black,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 18,
-                          ),
-                        ),
+                        Text(date.day.toString(), style: TextStyle(color: isSelected ? Colors.white : Colors.black, fontWeight: FontWeight.bold, fontSize: 18)),
                       ],
                     ),
                   ),
@@ -187,61 +173,38 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
             padding: EdgeInsets.all(16.0),
             child: Text("Select Time", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           ),
-          
           Expanded(
             child: StreamBuilder<List<String>>(
               stream: DatabaseService().getBookedSlots(widget.court.id, _selectedDate),
               builder: (context, snapshot) {
+                if (snapshot.hasError) return Center(child: Text("Error: ${snapshot.error}", style: const TextStyle(color: Colors.red)));
                 
-                if (snapshot.hasError) {
-                  return Center(child: Text("Error: ${snapshot.error}", style: const TextStyle(color: Colors.red)));
-                }
-
                 final bookedSlots = snapshot.data ?? [];
 
                 return GridView.builder(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
-                    childAspectRatio: 2.5,
-                    crossAxisSpacing: 10,
-                    mainAxisSpacing: 10,
+                    crossAxisCount: 3, childAspectRatio: 2.5, crossAxisSpacing: 10, mainAxisSpacing: 10,
                   ),
                   itemCount: _allTimeSlots.length,
                   itemBuilder: (context, index) {
                     final time = _allTimeSlots[index];
-                    
-                    // 🛑 LOGIC UPDATE: Check both Database AND Time
                     final isBooked = bookedSlots.contains(time);
                     final isPast = _isTimeSlotInPast(time);
-                    
                     final isDisabled = isBooked || isPast;
                     final isSelected = _selectedTime == time;
 
                     return ChoiceChip(
-                      label: Text(
-                        isBooked ? "Booked" : (isPast ? "Expired" : time),
-                      ),
+                      label: Text(isBooked ? "Booked" : (isPast ? "Expired" : time)),
                       selected: isSelected,
                       selectedColor: Colors.blueAccent,
-                      
-                      // Dark Grey for Booked, Light Grey for Past, White for Available
-                      backgroundColor: isBooked 
-                          ? Colors.grey[400] 
-                          : (isPast ? Colors.grey[200] : Colors.grey[100]),
-                      
+                      backgroundColor: isBooked ? Colors.grey[400] : (isPast ? Colors.grey[200] : Colors.grey[100]),
                       labelStyle: TextStyle(
-                        color: isDisabled 
-                            ? Colors.grey 
-                            : (isSelected ? Colors.white : Colors.black),
+                        color: isDisabled ? Colors.grey : (isSelected ? Colors.white : Colors.black),
                         fontSize: 12,
                         decoration: isDisabled ? TextDecoration.lineThrough : null,
                       ),
-                      
-                      // Disable tap if booked OR past
-                      onSelected: isDisabled ? null : (selected) {
-                        setState(() => _selectedTime = selected ? time : null);
-                      },
+                      onSelected: isDisabled ? null : (selected) => setState(() => _selectedTime = selected ? time : null),
                     );
                   },
                 );
@@ -249,16 +212,19 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
             ),
           ),
 
+          // 4. Action Button
           Container(
             padding: const EdgeInsets.all(16),
             child: SafeArea(
               child: SizedBox(
-                width: double.infinity,
-                height: 50,
+                width: double.infinity, height: 50,
                 child: ElevatedButton(
-                  onPressed: _selectedTime == null ? null : _proceedToSummary,
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent),
-                  child: const Text("CONTINUE", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  onPressed: _selectedTime == null ? null : _handleAction,
+                  style: ElevatedButton.styleFrom(backgroundColor: isReschedule ? Colors.orange : Colors.blueAccent),
+                  child: Text(
+                    isReschedule ? "UPDATE BOOKING" : "CONTINUE", // Change Text
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
                 ),
               ),
             ),

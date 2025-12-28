@@ -3,7 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../services/auth_service.dart';
 import '../../../services/database_service.dart';
 import '../../../models/booking_model.dart';
-import '../../../widgets/booking_card.dart'; 
+import '../../../widgets/booking_card.dart';
+import 'package:court_time/screens/player/booking/slot_selection_screen.dart'; //reshedule 
 
 class MyBookingsScreen extends StatefulWidget {
   const MyBookingsScreen({super.key});
@@ -17,7 +18,6 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
   @override
   void initState() {
     super.initState();
-    // ⚡ Run this check every time the screen opens
     _checkExpiredBookings();
   }
 
@@ -39,18 +39,14 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
 
     for (var doc in snapshot.docs) {
       final data = doc.data();
-      // Check the Date
       final Timestamp? bookingTimestamp = data['bookingDate'];
+      
       if (bookingTimestamp != null) {
         DateTime bookingDate = bookingTimestamp.toDate();
 
-        // If the booking date is BEFORE today (in the past)
-        if (bookingDate.isBefore(now.subtract(const Duration(hours: 2)))) {
-          // We add a 2-hour buffer so it doesn't disappear immediately when the game starts
-          
-          // Update status to 'Completed'
+        // If booking is more than 1 hours in the past, mark as Completed
+        if (bookingDate.isBefore(now.subtract(const Duration(hours: 1)))) {
           await DatabaseService().updateBookingStatus(doc.id, 'Completed');
-          debugPrint("Auto-completed booking: ${doc.id}");
         }
       }
     }
@@ -64,11 +60,11 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text("Cancel Booking?"),
-        content: const Text("Are you sure? This action cannot be undone."),
+        content: const Text("Are you sure you want to cancel your request?"),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text("Keep it"),
+            child: const Text("No, Keep it"),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
@@ -83,7 +79,44 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
       await DatabaseService().updateBookingStatus(bookingId, 'Cancelled');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Booking cancelled.")),
+          const SnackBar(content: Text("Booking cancelled successfully.")),
+        );
+      }
+    }
+  }
+
+  // ==============================================================
+  // 3. RESCHEDULE LOGIC (Update Time)
+  // ==============================================================
+  void _rescheduleBooking(BookingModel booking) async {
+    // Show Loading
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (c) => const Center(child: CircularProgressIndicator()),
+    );
+
+    // Fetch Court Details so we can open the selection screen
+    final court = await DatabaseService().getCourtById(booking.courtId);
+    
+    // Hide Loading
+    if (mounted) Navigator.pop(context);
+
+    if (court != null && mounted) {
+      // Navigate to SlotSelectionScreen in "Update Mode"
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => SlotSelectionScreen(
+            court: court,          
+            bookingId: booking.id, // Passing ID triggers "Update Mode"
+          ),
+        ),
+      );
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Error: Court details not found.")),
         );
       }
     }
@@ -124,9 +157,8 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
   }
 
   Widget _buildBookingList(String userId, {required bool isActive}) {
-    // Active = Pending or Approved
+    // Define which statuses belong to which tab
     final List<String> activeStatuses = ['Pending', 'Approved', 'Confirmed'];
-    // History = Rejected, Cancelled, OR Completed
     final List<String> historyStatuses = ['Rejected', 'Cancelled', 'Completed'];
 
     final filterStatuses = isActive ? activeStatuses : historyStatuses;
@@ -139,11 +171,6 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
           .orderBy('createdAt', descending: true)
           .snapshots(),
       builder: (context, snapshot) {
-        
-        if (snapshot.hasError) {
-          // If error, print it (this helps catch index errors too)
-          return Center(child: Text("Error: ${snapshot.error}", style: const TextStyle(color: Colors.red)));
-        }
 
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
@@ -177,18 +204,36 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
           itemBuilder: (context, index) {
             final data = docs[index].data() as Map<String, dynamic>;
             final booking = BookingModel.fromMap(data, docs[index].id);
-            // Only show Cancel button if status is 'Pending'.
-            final bool canCancel = booking.status == 'Pending';
+
+            // 🔒 RULES:
+            // 1. Only 'Pending' bookings can be Modified or Cancelled.
+            // 2. 'Approved' bookings are locked (must contact owner).
+            final bool isEditable = booking.status == 'Pending';
 
             return BookingCard(
               booking: booking,
-              trailing: (isActive && canCancel) 
-                ? IconButton(
-                    icon: const Icon(Icons.cancel, color: Colors.red),
-                    tooltip: "Cancel",
-                    onPressed: () => _cancelBooking(booking.id),
-                  ) 
-                : null, // No cancel button in history
+              trailing: isActive
+                ? Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // RESCHEDULE BUTTON (Blue Edit Icon)
+                      if (isEditable)
+                        IconButton(
+                          icon: const Icon(Icons.edit_calendar, color: Colors.blue),
+                          tooltip: "Reschedule / Update Time",
+                          onPressed: () => _rescheduleBooking(booking),
+                        ),
+                      
+                      // CANCEL BUTTON (Red X Icon)
+                      if (isEditable)
+                        IconButton(
+                          icon: const Icon(Icons.cancel, color: Colors.red),
+                          tooltip: "Cancel Request",
+                          onPressed: () => _cancelBooking(booking.id),
+                        ),
+                    ],
+                  )
+                : null, // No buttons for History or Approved bookings
             );
           },
         );
