@@ -28,6 +28,40 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
     "05:00 PM", "08:00 PM", "09:00 PM"
   ];
 
+  // 🕒 HELPER: Check if a time slot is in the past
+  bool _isTimeSlotInPast(String timeSlot) {
+    final now = DateTime.now();
+    
+    // 1. If selected date is in the future (tomorrow+), the slot is NOT in the past.
+    if (_selectedDate.year > now.year || 
+        _selectedDate.month > now.month || 
+        _selectedDate.day > now.day) {
+      return false; 
+    }
+
+    // 2. If selected date is TODAY, we must check the hour.
+    try {
+      // Parse "09:00 AM" to get the hour
+      // We assume the format is strictly "hh:mm a"
+      DateFormat format = DateFormat("hh:mm a"); 
+      DateTime slotTime = format.parse(timeSlot);
+
+      // Create a full DateTime object for this slot today
+      DateTime slotDateTime = DateTime(
+        _selectedDate.year,
+        _selectedDate.month,
+        _selectedDate.day,
+        slotTime.hour,
+        slotTime.minute,
+      );
+
+      // Return true if the slot is before right now
+      return slotDateTime.isBefore(now);
+    } catch (e) {
+      return false; // Safety fallback
+    }
+  }
+
   void _proceedToSummary() {
     if (_selectedTime == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -35,7 +69,6 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
       );
       return;
     }
-
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -109,7 +142,7 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
                   onTap: () {
                     setState(() {
                       _selectedDate = date;
-                      _selectedTime = null; // Reset time when date changes
+                      _selectedTime = null; 
                     });
                   },
                   child: Container(
@@ -149,7 +182,7 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
             ),
           ),
 
-          // 3. Time Selection (Dynamic Stream)
+          // 3. Time Selection
           const Padding(
             padding: EdgeInsets.all(16.0),
             child: Text("Select Time", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
@@ -157,11 +190,13 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
           
           Expanded(
             child: StreamBuilder<List<String>>(
-              // It listens to the database for occupied slots on this specific day
               stream: DatabaseService().getBookedSlots(widget.court.id, _selectedDate),
               builder: (context, snapshot) {
                 
-                // Determine which slots are taken
+                if (snapshot.hasError) {
+                  return Center(child: Text("Error: ${snapshot.error}", style: const TextStyle(color: Colors.red)));
+                }
+
                 final bookedSlots = snapshot.data ?? [];
 
                 return GridView.builder(
@@ -176,26 +211,35 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
                   itemBuilder: (context, index) {
                     final time = _allTimeSlots[index];
                     
-                    // Logic: Is this slot already booked?
+                    // 🛑 LOGIC UPDATE: Check both Database AND Time
                     final isBooked = bookedSlots.contains(time);
+                    final isPast = _isTimeSlotInPast(time);
+                    
+                    final isDisabled = isBooked || isPast;
                     final isSelected = _selectedTime == time;
 
                     return ChoiceChip(
-                      label: Text(isBooked ? "Booked" : time),
-                      // Grey out if booked, Blue if selected, White if available
+                      label: Text(
+                        isBooked ? "Booked" : (isPast ? "Expired" : time),
+                      ),
                       selected: isSelected,
                       selectedColor: Colors.blueAccent,
-                      backgroundColor: isBooked ? Colors.grey[300] : Colors.grey[100],
+                      
+                      // Dark Grey for Booked, Light Grey for Past, White for Available
+                      backgroundColor: isBooked 
+                          ? Colors.grey[400] 
+                          : (isPast ? Colors.grey[200] : Colors.grey[100]),
+                      
                       labelStyle: TextStyle(
-                        // Grey text if booked
-                        color: isBooked 
+                        color: isDisabled 
                             ? Colors.grey 
                             : (isSelected ? Colors.white : Colors.black),
                         fontSize: 12,
-                        decoration: isBooked ? TextDecoration.lineThrough : null,
+                        decoration: isDisabled ? TextDecoration.lineThrough : null,
                       ),
-                      // Disable tap if booked
-                      onSelected: isBooked ? null : (selected) {
+                      
+                      // Disable tap if booked OR past
+                      onSelected: isDisabled ? null : (selected) {
                         setState(() => _selectedTime = selected ? time : null);
                       },
                     );
@@ -205,13 +249,8 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
             ),
           ),
 
-          // 4. Continue Button
           Container(
             padding: const EdgeInsets.all(16),
-            decoration: const BoxDecoration(
-              color: Colors.white, 
-              boxShadow: [BoxShadow(blurRadius: 5, color: Colors.black12)]
-            ),
             child: SafeArea(
               child: SizedBox(
                 width: double.infinity,

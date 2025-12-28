@@ -177,10 +177,12 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
           itemBuilder: (context, index) {
             final data = docs[index].data() as Map<String, dynamic>;
             final booking = BookingModel.fromMap(data, docs[index].id);
+            // Only show Cancel button if status is 'Pending'.
+            final bool canCancel = booking.status == 'Pending';
 
             return BookingCard(
               booking: booking,
-              trailing: isActive 
+              trailing: (isActive && canCancel) 
                 ? IconButton(
                     icon: const Icon(Icons.cancel, color: Colors.red),
                     tooltip: "Cancel",
