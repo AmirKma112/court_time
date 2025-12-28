@@ -157,7 +157,6 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
           
           Expanded(
             child: StreamBuilder<List<String>>(
-              // 🔴 THIS IS THE MAGIC PART
               // It listens to the database for occupied slots on this specific day
               stream: DatabaseService().getBookedSlots(widget.court.id, _selectedDate),
               builder: (context, snapshot) {
