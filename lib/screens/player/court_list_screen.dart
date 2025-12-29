@@ -17,7 +17,7 @@ class CourtListScreen extends StatelessWidget {
         backgroundColor: Colors.blueAccent,
       ),
       body: StreamBuilder<List<CourtModel>>(
-        // Call the function we made in DatabaseService
+        // Call the function made in DatabaseService
         stream: DatabaseService().getCourts(sportType),
         builder: (context, snapshot) {
           // 1. Loading State
