@@ -84,10 +84,15 @@ class CourtDetailScreen extends StatelessWidget {
                           children: [
                             const Icon(Icons.location_on, color: Colors.grey, size: 18),
                             const SizedBox(width: 4),
-                            Text(
+                            Expanded( 
+                              child: Text(
                               court.location,
                               style: TextStyle(fontSize: 16, color: Colors.grey[700]),
+                              overflow: TextOverflow.ellipsis, // Adds "..." at the end
+                              maxLines: 2, // Only show 1 line (change to 2 if you want wrapping)
                             ),
+                          )
+                           
                           ],
                         ),
                         const SizedBox(height: 20),
