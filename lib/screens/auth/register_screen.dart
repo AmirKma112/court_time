@@ -87,7 +87,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final Color activeColor = _selectedRole == 'owner' ? Colors.orange : Colors.blueAccent;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF8F9FD),
       appBar: AppBar(
         title: const Text("Create Account"),
         backgroundColor: activeColor,
