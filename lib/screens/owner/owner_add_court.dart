@@ -1,12 +1,12 @@
-import 'dart:io'; // Needed for File
+import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart'; // For picking images
-import 'package:firebase_storage/firebase_storage.dart'; // For uploading
+import 'package:image_picker/image_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import '../../models/court_model.dart';
 import '../../services/database_service.dart';
 import '../../services/auth_service.dart';
-import '../../widgets/custom_button.dart'; // Assuming you have this
-import '../../widgets/custom_input.dart';  // Assuming you have this
+import '../../widgets/custom_button.dart';
+import '../../widgets/custom_input.dart';
 
 class OwnerAddCourt extends StatefulWidget {
   final CourtModel? courtToEdit;
@@ -21,17 +21,14 @@ class _OwnerAddCourtState extends State<OwnerAddCourt> {
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
 
-  // Controllers
   final _nameController = TextEditingController();
   final _priceController = TextEditingController();
   final _locationController = TextEditingController();
   final _descController = TextEditingController();
   
-  // Image State
-  File? _pickedImageFile;        // The new image selected from device
-  String? _existingImageUrl;     // The URL if editing an existing court
+  File? _pickedImageFile;        
+  String? _existingImageUrl;     
 
-  // Dropdown & Amenities
   String _selectedType = 'Badminton';
   final List<String> _availableAmenities = ['Air Cond', 'WiFi', 'Parking', 'Showers', 'Equipment Rent', 'Locker'];
   final List<String> _selectedAmenities = [];
@@ -39,7 +36,6 @@ class _OwnerAddCourtState extends State<OwnerAddCourt> {
   @override
   void initState() {
     super.initState();
-    // Pre-fill data if Editing
     if (widget.courtToEdit != null) {
       _nameController.text = widget.courtToEdit!.name;
       _priceController.text = widget.courtToEdit!.pricePerHour.toString();
@@ -51,11 +47,10 @@ class _OwnerAddCourtState extends State<OwnerAddCourt> {
     }
   }
 
-  // 1. FUNCTION TO PICK IMAGE
   Future<void> _pickImage() async {
     final pickedFile = await ImagePicker().pickImage(
-      source: ImageSource.gallery, // Change to ImageSource.camera to take a photo
-      imageQuality: 80, // Compress slightly to save space
+      source: ImageSource.gallery,
+      imageQuality: 80, 
     );
 
     if (pickedFile != null) {
@@ -65,25 +60,17 @@ class _OwnerAddCourtState extends State<OwnerAddCourt> {
     }
   }
 
-  // 2. FUNCTION TO UPLOAD IMAGE TO FIREBASE STORAGE
   Future<String> _uploadImage(File image) async {
     try {
-      // Create a unique filename based on time
       final String fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
-      
-      // Reference to storage: /court_images/filename.jpg
       final Reference storageRef = FirebaseStorage.instance
           .ref()
           .child('court_images')
           .child(fileName);
 
-      // Upload the file
       final UploadTask uploadTask = storageRef.putFile(image);
       final TaskSnapshot snapshot = await uploadTask;
-
-      // Get the download URL
-      final String downloadUrl = await snapshot.ref.getDownloadURL();
-      return downloadUrl;
+      return await snapshot.ref.getDownloadURL();
     } catch (e) {
       throw Exception("Image Upload Failed: $e");
     }
@@ -91,7 +78,6 @@ class _OwnerAddCourtState extends State<OwnerAddCourt> {
 
   void _saveCourt() async {
     if (_formKey.currentState!.validate()) {
-      // Validation: Ensure an image exists (either new or existing)
       if (_pickedImageFile == null && _existingImageUrl == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Please upload an image for the court.")),
@@ -107,16 +93,12 @@ class _OwnerAddCourtState extends State<OwnerAddCourt> {
 
         String finalImageUrl = '';
 
-        // A. If user picked a NEW image, upload it
         if (_pickedImageFile != null) {
           finalImageUrl = await _uploadImage(_pickedImageFile!);
-        } 
-        // B. If not, keep the OLD URL
-        else if (_existingImageUrl != null) {
+        } else if (_existingImageUrl != null) {
           finalImageUrl = _existingImageUrl!;
         }
 
-        // C. Prepare Data
         final newCourt = CourtModel(
           id: widget.courtToEdit?.id ?? '', 
           ownerId: ownerId,
@@ -125,17 +107,19 @@ class _OwnerAddCourtState extends State<OwnerAddCourt> {
           pricePerHour: double.parse(_priceController.text.trim()),
           location: _locationController.text.trim(),
           description: _descController.text.trim(),
-          imageUrl: finalImageUrl, // Use the real Firebase URL
+          imageUrl: finalImageUrl, 
           amenities: _selectedAmenities,
         );
 
-        // D. Save to Firestore
         await DatabaseService().saveCourt(newCourt, isEditing: widget.courtToEdit != null);
         
         if (!mounted) return;
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Court Saved Successfully!")),
+          const SnackBar(
+            content: Text("Court Saved Successfully!"),
+            backgroundColor: Colors.green,
+          ),
         );
 
       } catch (e) {
@@ -154,137 +138,220 @@ class _OwnerAddCourtState extends State<OwnerAddCourt> {
     bool isEditing = widget.courtToEdit != null;
 
     return Scaffold(
+      backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
         title: Text(isEditing ? "Edit Court" : "Add New Court"),
-        backgroundColor: Colors.blueGrey,
+        backgroundColor: Colors.transparent,
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.orange, Colors.deepOrange], 
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.vertical(bottom: Radius.circular(30)),
+          ),
+        ),
+        elevation: 0,
+        centerTitle: true,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         child: Form(
           key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               
-              // 🖼️ IMAGE PICKER AREA
+              // 1. IMAGE UPLOAD SECTION
               GestureDetector(
                 onTap: _pickImage,
                 child: Container(
-                  height: 200,
+                  height: 220,
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    color: Colors.grey[200],
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey.shade400),
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: Colors.grey.shade300),
+                    boxShadow: [
+                      BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
+                    ],
                     image: _pickedImageFile != null
-                        ? DecorationImage(
-                            image: FileImage(_pickedImageFile!), 
-                            fit: BoxFit.cover,
-                          )
+                        ? DecorationImage(image: FileImage(_pickedImageFile!), fit: BoxFit.cover)
                         : (_existingImageUrl != null && _existingImageUrl!.isNotEmpty)
-                            ? DecorationImage(
-                                image: NetworkImage(_existingImageUrl!),
-                                fit: BoxFit.cover,
-                              )
+                            ? DecorationImage(image: NetworkImage(_existingImageUrl!), fit: BoxFit.cover)
                             : null,
                   ),
                   child: (_pickedImageFile == null && _existingImageUrl == null)
-                      ? const Column(
+                      ? Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.add_a_photo, size: 50, color: Colors.grey),
-                            SizedBox(height: 8),
-                            Text("Tap to upload court image", style: TextStyle(color: Colors.grey)),
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: Colors.orange.withOpacity(0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.add_a_photo_rounded, size: 40, color: Colors.orange),
+                            ),
+                            const SizedBox(height: 12),
+                            Text("Tap to upload venue photo", style: TextStyle(color: Colors.grey[600], fontWeight: FontWeight.bold)),
                           ],
                         )
-                      : null,
+                      : Container(
+                          alignment: Alignment.bottomRight,
+                          padding: const EdgeInsets.all(12),
+                          child: CircleAvatar(
+                            backgroundColor: Colors.white,
+                            child: const Icon(Icons.edit, color: Colors.orange),
+                          ),
+                        ),
                 ),
               ),
               const SizedBox(height: 24),
 
-              // 1. Name
-              CustomInput(
-                label: "Court Name",
-                icon: Icons.stadium,
-                controller: _nameController,
-                validator: (val) => val!.isEmpty ? "Required" : null,
-              ),
-
-              // 2. Type Dropdown
-              DropdownButtonFormField<String>(
-                value: _selectedType,
-                decoration: const InputDecoration(
-                  labelText: "Sport Type",
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.category, color: Colors.blueAccent),
+              // 2. BASIC DETAILS CARD
+              _buildSectionTitle("Basic Info"),
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
                 ),
-                items: ['Badminton', 'Futsal']
-                    .map((type) => DropdownMenuItem(value: type, child: Text(type)))
-                    .toList(),
-                onChanged: (val) => setState(() => _selectedType = val!),
-              ),
-              const SizedBox(height: 16),
+                child: Column(
+                  children: [
+                    CustomInput(
+                      label: "Court Name",
+                      icon: Icons.stadium_rounded,
+                      controller: _nameController,
+                      validator: (val) => val!.isEmpty ? "Required" : null,
+                    ),
+                    const SizedBox(height: 16),
+                    
+                    // Dropdown for Type
+                    DropdownButtonFormField<String>(
+                      value: _selectedType,
+                      decoration: InputDecoration(
+                        labelText: "Sport Type",
+                        prefixIcon: const Icon(Icons.sports, color: Colors.blueAccent),
+                        filled: true,
+                        fillColor: Colors.grey[50],
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade200)),
+                      ),
+                      items: ['Badminton', 'Futsal']
+                          .map((type) => DropdownMenuItem(value: type, child: Text(type)))
+                          .toList(),
+                      onChanged: (val) => setState(() => _selectedType = val!),
+                    ),
+                    const SizedBox(height: 16),
 
-              // 3. Price
-              CustomInput(
-                label: "Price per Hour (RM)",
-                icon: Icons.attach_money,
-                controller: _priceController,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                validator: (val) => val!.isEmpty ? "Required" : null,
+                    CustomInput(
+                      label: "Price per Hour (RM)",
+                      icon: Icons.attach_money_rounded,
+                      controller: _priceController,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      validator: (val) => val!.isEmpty ? "Required" : null,
+                    ),
+                  ],
+                ),
               ),
+              const SizedBox(height: 24),
 
-              // 4. Location
-              CustomInput(
-                label: "Location / Floor",
-                icon: Icons.location_on,
-                controller: _locationController,
-                validator: (val) => val!.isEmpty ? "Required" : null,
+              // 3. LOCATION & DESCRIPTION
+              _buildSectionTitle("Details"),
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
+                ),
+                child: Column(
+                  children: [
+                    CustomInput(
+                      label: "Location",
+                      icon: Icons.location_on_rounded,
+                      controller: _locationController,
+                      validator: (val) => val!.isEmpty ? "Required" : null,
+                    ),
+                    const SizedBox(height: 16),
+                    CustomInput(
+                      label: "Description & Rules",
+                      icon: Icons.description_rounded,
+                      controller: _descController,
+                      keyboardType: TextInputType.multiline,
+                    ),
+                  ],
+                ),
               ),
+              const SizedBox(height: 24),
 
-              // 5. Description
-              CustomInput(
-                label: "Description & Rules",
-                icon: Icons.description,
-                controller: _descController,
-              ),
-
-              // 6. Amenities
-              const Text("Select Amenities:", style: TextStyle(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                children: _availableAmenities.map((amenity) {
-                  final isSelected = _selectedAmenities.contains(amenity);
-                  return FilterChip(
-                    label: Text(amenity),
-                    selected: isSelected,
-                    selectedColor: Colors.green[100],
-                    checkmarkColor: Colors.green,
-                    onSelected: (bool selected) {
-                      setState(() {
-                        if (selected) {
-                          _selectedAmenities.add(amenity);
-                        } else {
-                          _selectedAmenities.remove(amenity);
-                        }
-                      });
-                    },
-                  );
-                }).toList(),
+              // 4. AMENITIES
+              _buildSectionTitle("Amenities"),
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
+                ),
+                child: Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: _availableAmenities.map((amenity) {
+                    final isSelected = _selectedAmenities.contains(amenity);
+                    return FilterChip(
+                      label: Text(amenity),
+                      selected: isSelected,
+                      selectedColor: Colors.orange.withOpacity(0.2),
+                      checkmarkColor: Colors.deepOrange,
+                      labelStyle: TextStyle(
+                        color: isSelected ? Colors.deepOrange : Colors.black87,
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal
+                      ),
+                      backgroundColor: Colors.grey[100],
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        side: BorderSide(color: isSelected ? Colors.orange : Colors.transparent),
+                      ),
+                      onSelected: (bool selected) {
+                        setState(() {
+                          if (selected) {
+                            _selectedAmenities.add(amenity);
+                          } else {
+                            _selectedAmenities.remove(amenity);
+                          }
+                        });
+                      },
+                    );
+                  }).toList(),
+                ),
               ),
               const SizedBox(height: 30),
 
-              // SAVE BUTTON
+              // 5. SAVE BUTTON
               CustomButton(
                 text: "SAVE COURT",
                 isLoading: _isLoading,
-                backgroundColor: Colors.blueGrey,
+                backgroundColor: Colors.deepOrange,
                 onPressed: _saveCourt,
               ),
+              const SizedBox(height: 30),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 8, bottom: 8),
+      child: Text(
+        title,
+        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
       ),
     );
   }
