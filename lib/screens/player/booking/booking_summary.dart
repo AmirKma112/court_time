@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:court_time/models/court_model.dart';
-import 'package:court_time/models/booking_model.dart';
-import 'package:court_time/services/auth_service.dart';
-import 'package:court_time/services/database_service.dart';
-import 'package:court_time/screens/player/profile/my_bookings_screen.dart';
+import '../../../models/court_model.dart';
+import '../../../models/booking_model.dart';
+import '../../../services/auth_service.dart';
+import '../../../services/database_service.dart';
+import 'booking_success.dart'; // Import the new file here
 
 class BookingSummaryScreen extends StatefulWidget {
   final CourtModel court;
@@ -42,13 +42,13 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
       id: '', // Firestore will generate this
       courtId: widget.court.id,
       courtName: widget.court.name,
-      ownerId: widget.court.ownerId, // 🔒 Vital for Owner visibility
+      ownerId: widget.court.ownerId,
       userId: user.uid,
-      userName: user.displayName ?? "Player", // Or fetch from profile
+      userName: user.displayName ?? "Player",
       bookingDate: widget.date,
       timeSlot: widget.timeSlot,
-      totalPrice: widget.court.pricePerHour, // Assuming 1 hour for now
-      status: 'Pending', // Default status
+      totalPrice: widget.court.pricePerHour, 
+      status: 'Pending', 
       createdAt: DateTime.now(),
     );
 
@@ -74,35 +74,59 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Format Date for display (e.g., "Monday, 25 Oct 2025")
+    // Format Date for display
     final dateString = DateFormat('EEEE, d MMM y').format(widget.date);
 
     return Scaffold(
+      backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
         title: const Text("Confirm Booking"),
         backgroundColor: Colors.blueAccent,
+        elevation: 0,
+        centerTitle: true,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            bottom: Radius.circular(30.0),
+          ),
+        ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // 1. Court Details Card
-            Card(
-              elevation: 2,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              child: ListTile(
-                contentPadding: const EdgeInsets.all(12),
-                leading: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.network(
-                    widget.court.imageUrl,
-                    width: 60, height: 60, fit: BoxFit.cover,
-                    errorBuilder: (c,e,s) => Container(color: Colors.grey, width: 60),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))
+                ],
+              ),
+              child: Row(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.network(
+                      widget.court.imageUrl,
+                      width: 70, height: 70, fit: BoxFit.cover,
+                      errorBuilder: (c,e,s) => Container(color: Colors.grey[200], width: 70),
+                    ),
                   ),
-                ),
-                title: Text(widget.court.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                subtitle: Text(widget.court.location),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(widget.court.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                        const SizedBox(height: 4),
+                        Text(widget.court.location, style: TextStyle(color: Colors.grey[600], fontSize: 13)),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 24),
@@ -111,38 +135,60 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
             const Text("Booking Details", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
             
-            _buildDetailRow(Icons.calendar_today, "Date", dateString),
-            _buildDetailRow(Icons.access_time, "Time", widget.timeSlot),
-            _buildDetailRow(Icons.sports_tennis, "Sport", widget.court.type),
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                children: [
+                   _buildDetailRow(Icons.calendar_today, "Date", dateString),
+                   const Divider(height: 20),
+                   _buildDetailRow(Icons.access_time, "Time", widget.timeSlot),
+                   const Divider(height: 20),
+                   _buildDetailRow(Icons.sports_tennis, "Sport", widget.court.type),
+                ],
+              ),
+            ),
             
-            const Divider(height: 30),
+            const SizedBox(height: 24),
 
             // 3. Price Calculation
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text("Total Price", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                Text(
-                  "RM ${widget.court.pricePerHour.toStringAsFixed(2)}",
-                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.blueAccent),
-                ),
-              ],
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.blueAccent.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.blueAccent.withOpacity(0.3))
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text("Total Price", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
+                  Text(
+                    "RM ${widget.court.pricePerHour.toStringAsFixed(2)}",
+                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Colors.blueAccent),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 40),
 
             // 4. Confirm Button
             SizedBox(
               width: double.infinity,
-              height: 50,
+              height: 55,
               child: ElevatedButton(
                 onPressed: _isLoading ? null : _confirmBooking,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  backgroundColor: Colors.blueAccent,
+                  elevation: 5,
+                  shadowColor: Colors.blueAccent.withOpacity(0.4),
                 ),
                 child: _isLoading
                     ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text("CONFIRM BOOKING", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    : const Text("CONFIRM BOOKING", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
               ),
             ),
           ],
@@ -152,78 +198,14 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
   }
 
   Widget _buildDetailRow(IconData icon, String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
-        children: [
-          Icon(icon, color: Colors.grey, size: 20),
-          const SizedBox(width: 12),
-          Text(label, style: const TextStyle(color: Colors.grey, fontSize: 16)),
-          const Spacer(),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-        ],
-      ),
-    );
-  }
-}
-
-// ============================================================================
-// SIMPLE SUCCESS SCREEN
-// ============================================================================
-class BookingSuccessScreen extends StatelessWidget {
-  const BookingSuccessScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.check_circle, size: 100, color: Colors.green),
-              const SizedBox(height: 24),
-              const Text(
-                "Booking Successful!",
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                "Your booking is pending approval from the venue owner. check 'My Bookings' for updates.",
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.grey),
-              ),
-              const SizedBox(height: 40),
-              
-              // Button: Go to My Bookings
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(padding: const EdgeInsets.all(16)),
-                  onPressed: () {
-                    // Navigate to My Bookings and remove all previous booking screens from stack
-                    Navigator.pushAndRemoveUntil(
-                      context,
-                      MaterialPageRoute(builder: (context) => const MyBookingsScreen()),
-                      (route) => route.isFirst, // Keep only the dashboard/main wrapper
-                    );
-                  },
-                  child: const Text("VIEW MY BOOKINGS"),
-                ),
-              ),
-              
-              TextButton(
-                onPressed: () {
-                   Navigator.popUntil(context, (route) => route.isFirst);
-                }, 
-                child: const Text("Back to Home")
-              )
-            ],
-          ),
-        ),
-      ),
+    return Row(
+      children: [
+        Icon(icon, color: Colors.grey, size: 20),
+        const SizedBox(width: 12),
+        Text(label, style: const TextStyle(color: Colors.grey, fontSize: 15)),
+        const Spacer(),
+        Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.black87)),
+      ],
     );
   }
 }
