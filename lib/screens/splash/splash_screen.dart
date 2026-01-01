@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../auth/login_screen.dart'; 
+import '../auth/login_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -20,7 +20,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     // 1. Initialize Animation Controller
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1500), // Animation takes 1.5 seconds
+      duration: const Duration(milliseconds: 1500),
     );
 
     // 2. Define Fade Effect
@@ -28,15 +28,12 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       CurvedAnimation(parent: _controller, curve: Curves.easeIn),
     );
 
-    // 3. Define Slide Effect (Moves slightly up)
+    // 3. Define Slide Effect
     _slideAnimation = Tween<Offset>(begin: const Offset(0, 0.5), end: Offset.zero).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeOutBack),
     );
 
-    // Start the animation
     _controller.forward();
-
-    // Start the navigation timer
     _navigateToLogin();
   }
 
@@ -47,11 +44,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   }
 
   _navigateToLogin() async {
-    // Total wait time (Animation + pause)
     await Future.delayed(const Duration(seconds: 3));
-    
     if (!mounted) return;
-
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => const LoginScreen()),
@@ -61,20 +55,18 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // 4. Gradient Background
       body: Container(
         width: double.infinity,
         height: double.infinity,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [Colors.blueAccent, Color.fromARGB(255, 99, 156, 255)], // Deep Blue to Light Blue
+            colors: [Colors.blueAccent, Color.fromARGB(255, 99, 156, 255)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
         ),
         child: Stack(
           children: [
-            // Centered Logo and Text with Animation
             Center(
               child: FadeTransition(
                 opacity: _fadeAnimation,
@@ -83,31 +75,52 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // 5. Styled Logo Container
-                      Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.15), // Glassy effect
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white.withOpacity(0.2), width: 2),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 20,
-                              spreadRadius: 5,
-                            )
-                          ],
-                        ),
-                        child: const Image(image: NetworkImage('images/logo1.png'), width: 70, height: 70, color: Colors.white),
+                      // Stack to layer the Spinner and the Logo
+                      Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          // 1. The Spinning Loader (Outer Ring)
+                          const SizedBox(
+                            width: 120, // Slightly larger than the logo container (70 + 20*2 = 110)
+                            height: 120,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 3, 
+                            ),
+                          ),
+                          // 2. The Logo Container
+                          Container(
+                            padding: const EdgeInsets.all(20),
+                            width: 110, // Fixed width to ensure perfect centering
+                            height: 110,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.15),
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white.withOpacity(0.2), width: 2),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 20,
+                                  spreadRadius: 5,
+                                )
+                              ],
+                            ),
+                            child: const Image(
+                              image: NetworkImage('images/logo1.png'),
+                              color: Colors.white,
+                              fit: BoxFit.contain,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 24),
+
+                      const SizedBox(height: 30), // Increased spacing slightly
                       
-                      // App Title
                       const Text(
                         "CourtTime+",
                         style: TextStyle(
                           fontSize: 36,
-                          fontWeight: FontWeight.w900, // Extra Bold
+                          fontWeight: FontWeight.w900,
                           color: Colors.white,
                           letterSpacing: 1.2,
                           shadows: [
@@ -121,7 +134,6 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                       ),
                       const SizedBox(height: 8),
                       
-                      // Slogan
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
@@ -143,23 +155,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                 ),
               ),
             ),
-
-            // 6. Subtle Loader at the bottom
-            const Positioned(
-              bottom: 50,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: SizedBox(
-                  width: 24, 
-                  height: 24,
-                  child: CircularProgressIndicator(
-                    color: Colors.white,
-                    strokeWidth: 2.5,
-                  ),
-                ),
-              ),
-            ),
+            
+            // REMOVED: The Positioned bottom loader is deleted from here
           ],
         ),
       ),
