@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import '../auth/login_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../config/routes.dart'; // Import your routes
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -17,24 +19,24 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   void initState() {
     super.initState();
 
-    // 1. Initialize Animation Controller
+    // 1. Initialize Animation
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1500),
     );
 
-    // 2. Define Fade Effect
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeIn),
     );
 
-    // 3. Define Slide Effect
     _slideAnimation = Tween<Offset>(begin: const Offset(0, 0.5), end: Offset.zero).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeOutBack),
     );
 
     _controller.forward();
-    _navigateToLogin();
+
+    // 2. Check Login State instead of just waiting
+    _checkAuthAndNavigate();
   }
 
   @override
@@ -43,13 +45,49 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     super.dispose();
   }
 
-  _navigateToLogin() async {
-    await Future.delayed(const Duration(seconds: 3));
+  // --- NEW LOGIC FOR PERSISTENT LOGIN ---
+  _checkAuthAndNavigate() async {
+    // A. Wait for the animation/branding (at least 2 seconds)
+    await Future.delayed(const Duration(seconds: 2));
+
+    // B. Check if a user is already logged in via Firebase
+    final User? currentUser = FirebaseAuth.instance.currentUser;
+
     if (!mounted) return;
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const LoginScreen()),
-    );
+
+    if (currentUser != null) {
+      // --- USER IS LOGGED IN ---
+      try {
+        // C. Fetch their Role from Firestore to know which dashboard to open
+        DocumentSnapshot userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(currentUser.uid)
+            .get();
+
+        if (mounted) {
+          if (userDoc.exists) {
+            String role = userDoc['role'] ?? 'player';
+
+            // D. Redirect based on Role
+            if (role == 'owner') {
+              Navigator.pushReplacementNamed(context, AppRoutes.ownerDashboard);
+            } else {
+              Navigator.pushReplacementNamed(context, AppRoutes.playerDashboard);
+            }
+          } else {
+            // Edge case: User exists in Auth but not in Database -> Go to Login
+            Navigator.pushReplacementNamed(context, AppRoutes.login);
+          }
+        }
+      } catch (e) {
+        // If internet error or DB error, fall back to Login
+        if (mounted) Navigator.pushReplacementNamed(context, AppRoutes.login);
+      }
+    } else {
+      // --- USER IS NOT LOGGED IN ---
+      // E. Go to Login Screen
+      Navigator.pushReplacementNamed(context, AppRoutes.login);
+    }
   }
 
   @override
@@ -60,7 +98,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
         height: double.infinity,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [Colors.blueAccent, Color.fromARGB(255, 99, 156, 255)],
+            colors: [Color(0xFF2962FF), Color(0xFF448AFF)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -75,7 +113,6 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // Stack to layer the Spinner and the Logo
                       Stack(
                         alignment: Alignment.center,
                         children: [
@@ -113,9 +150,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                           ),
                         ],
                       ),
-
-                      const SizedBox(height: 30), // Increased spacing slightly
-                      
+                      const SizedBox(height: 24),
                       const Text(
                         "CourtTime+",
                         style: TextStyle(
@@ -124,16 +159,11 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                           color: Colors.white,
                           letterSpacing: 1.2,
                           shadows: [
-                            Shadow(
-                              offset: Offset(0, 4),
-                              blurRadius: 10.0,
-                              color: Colors.black26,
-                            ),
+                            Shadow(offset: Offset(0, 4), blurRadius: 10.0, color: Colors.black26),
                           ],
                         ),
                       ),
                       const SizedBox(height: 8),
-                      
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
@@ -155,8 +185,6 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                 ),
               ),
             ),
-            
-            // REMOVED: The Positioned bottom loader is deleted from here
           ],
         ),
       ),

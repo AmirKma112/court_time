@@ -1,115 +1,55 @@
-import 'package:court_time/screens/owner/owner_dashboard.dart';
 import 'package:flutter/material.dart';
+import 'package:court_time/screens/splash/splash_screen.dart';
 
-// 1. Import all your screens here
-import '../screens/splash/splash_screen.dart';
-import '../screens/auth/login_screen.dart';
-import '../screens/auth/register_screen.dart';
-import '../screens/player/player_dashboard.dart';
-import '../screens/player/court_list_screen.dart';
-import '../screens/player/court_detail_screen.dart';
-// import '../screens/admin/admin_manage_bookings.dart';
-// import '../screens/admin/admin_manage_courts.dart';
+// --- Auth Screens ---
+import 'package:court_time/screens/auth/login_screen.dart';
+import 'package:court_time/screens/auth/register_screen.dart';
 
-// 2. Import Models (needed for passing arguments)
-import '../models/court_model.dart';
+// --- Player Screens ---
+import 'package:court_time/screens/player/player_dashboard.dart';
+import 'package:court_time/screens/player/profile/my_bookings_screen.dart';
 
-// NOTE: Uncomment these imports once you create the files in the next steps
-// import '../screens/booking/slot_selection_screen.dart';
-// import '../screens/booking/booking_summary.dart';
-// import '../screens/admin/admin_add_court_screen.dart';
+// --- Owner Screens ---
+import 'package:court_time/screens/owner/owner_dashboard.dart';
+import 'package:court_time/screens/owner/owner_manage_bookings.dart';
+import 'package:court_time/screens/owner/owner_manage_courts.dart';
+import 'package:court_time/screens/owner/owner_add_court.dart';
 
 class AppRoutes {
-  // =========================================================================
-  // ROUTE NAMES (Constants)
-  // Use these strings instead of typing the path manually to avoid typos
-  // =========================================================================
+  // --- Route Name Constants ---
   static const String splash = '/';
   static const String login = '/login';
   static const String register = '/register';
-  static const String home = '/home';
-  static const String courtList = '/court-list';
-  static const String courtDetail = '/court-detail';
   
-  // Booking Routes
-  static const String slotSelection = '/booking/slots';
-  static const String bookingSummary = '/booking/summary';
-  
-  // Admin Routes
-  static const String adminDashboard = '/admin/dashboard';
-  static const String adminManageBookings = '/admin/bookings';
-  static const String adminManageCourts = '/admin/courts';
-  static const String adminAddCourt = '/admin/add-court';
+  // Player
+  static const String playerDashboard = '/player/dashboard';
+  static const String playerMyBookings = '/player/my_bookings';
 
-  // =========================================================================
-  // ROUTE GENERATOR
-  // This function handles the navigation logic
-  // =========================================================================
-  static Route<dynamic> onGenerateRoute(RouteSettings settings) {
-    switch (settings.name) {
+  // Owner
+  static const String ownerDashboard = '/owner/dashboard';
+  static const String ownerManageBookings = '/owner/manage_bookings';
+  static const String ownerManageCourts = '/owner/manage_courts';
+  static const String ownerAddCourt = '/owner/add_court';
+
+  // --- Route Map ---
+  static Map<String, WidgetBuilder> getRoutes() {
+    return {
+      splash: (context) => const SplashScreen(),
+      login: (context) => const LoginScreen(),
+      register: (context) => const RegisterScreen(),
       
-      // --- Public & Auth ---
-      case splash:
-        return MaterialPageRoute(builder: (_) => const SplashScreen());
-      case login:
-        return MaterialPageRoute(builder: (_) => const LoginScreen());
-      case register:
-        return MaterialPageRoute(builder: (_) => const RegisterScreen());
-
-      // --- Main User Flow ---
-      case home:
-        return MaterialPageRoute(builder: (_) => const PlayerDashboard());
+      // Player
+      playerDashboard: (context) => const PlayerDashboard(),
+      playerMyBookings: (context) => const MyBookingsScreen(),
       
-      case courtList:
-        // Extract the argument (e.g., "Badminton" or "Futsal")
-        final args = settings.arguments as String;
-        return MaterialPageRoute(
-          builder: (_) => CourtListScreen(sportType: args),
-        );
-
-      case courtDetail:
-        // Extract the argument (CourtModel object)
-        final args = settings.arguments as CourtModel;
-        return MaterialPageRoute(
-          builder: (_) => CourtDetailScreen(court: args),
-        );
-
-      // --- Admin Flow ---
-      case adminDashboard:
-        return MaterialPageRoute(builder: (_) => const OwnerDashboard());
+      // Owner
+      ownerDashboard: (context) => const OwnerDashboard(),
+      ownerManageBookings: (context) => const OwnerManageBookings(),
+      ownerManageCourts: (context) => const OwnerManageCourts(),
       
-      // case adminManageBookings:
-      //   return MaterialPageRoute(builder: (_) => const AdminManageBookings());
-
-      // case adminManageCourts:
-      //   return MaterialPageRoute(builder: (_) => const AdminManageCourts());
-
-      // --- Pending Screens (Uncomment when you create them) ---
-      
-      /*
-      case slotSelection:
-        final args = settings.arguments as CourtModel;
-        return MaterialPageRoute(builder: (_) => SlotSelectionScreen(court: args));
-
-      case adminAddCourt:
-         // If args is null, it's "Add Mode", if args exists, it's "Edit Mode"
-        final args = settings.arguments as CourtModel?; 
-        return MaterialPageRoute(builder: (_) => AdminAddCourtScreen(courtToEdit: args));
-      */
-
-      // --- Default Error Route ---
-      default:
-        return _errorRoute();
-    }
-  }
-
-  // Simple error page if navigation fails
-  static Route<dynamic> _errorRoute() {
-    return MaterialPageRoute(builder: (_) {
-      return Scaffold(
-        appBar: AppBar(title: const Text("Error")),
-        body: const Center(child: Text("Page not found!")),
-      );
-    });
+      // Note: This route is for "Adding" a court (no arguments). 
+      // To "Edit", you should use MaterialPageRoute to pass the court object.
+      ownerAddCourt: (context) => const OwnerAddCourt(),
+    };
   }
 }
