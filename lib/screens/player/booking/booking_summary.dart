@@ -147,7 +147,7 @@ class _BookingSummaryScreenState extends State<BookingSummaryScreen> {
                    const Divider(height: 20),
                    _buildDetailRow(Icons.access_time, "Time", widget.timeSlot),
                    const Divider(height: 20),
-                   _buildDetailRow(Icons.sports_tennis, "Sport", widget.court.type),
+                   _buildDetailRow(Icons.sports, "Sport", widget.court.type),
                 ],
               ),
             ),
