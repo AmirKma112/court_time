@@ -31,7 +31,11 @@ class CourtDetailScreen extends StatelessWidget {
                           return Container(
                             height: 250,
                             color: Colors.grey[300],
-                            child: const Icon(Icons.broken_image, size: 50, color: Colors.grey),
+                            child: const Center(
+                              child: Icon(Icons.image_not_supported,
+                              size: 80,
+                              color: Colors.grey),
+                              ),  
                           );
                         },
                       ),
