@@ -98,11 +98,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                             )
                           ],
                         ),
-                        child: const Icon(
-                          Icons.sports_tennis,
-                          size: 70,
-                          color: Colors.white,
-                        ),
+                        child: const Image(image: NetworkImage('images/logo1.png'), width: 70, height: 70, color: Colors.white),
                       ),
                       const SizedBox(height: 24),
                       
