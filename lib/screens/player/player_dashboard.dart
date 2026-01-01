@@ -9,13 +9,42 @@ class PlayerDashboard extends StatelessWidget {
   const PlayerDashboard({super.key});
 
   void _handleLogout(BuildContext context) async {
-    await AuthService().signOut();
-    if (!context.mounted) return;
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (context) => const LoginScreen()),
-      (route) => false,
+    // 1. Show the Alert Dialog and wait for user choice
+    bool? confirm = await showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Logout"),
+        content: const Text("Are you sure you want to logout?"),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        actions: [
+          // Cancel Button
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false), // Return false
+            child: const Text("Cancel", style: TextStyle(color: Colors.grey)),
+          ),
+          // Logout Button
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            onPressed: () => Navigator.pop(ctx, true), // Return true
+            child: const Text("Logout", style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
     );
+
+    // 2. if user clicked "Logout" (true)
+    if (confirm == true) {
+      await AuthService().signOut();
+      if (!context.mounted) return;
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
+        (route) => false,
+      );
+    }
   }
 
   @override
