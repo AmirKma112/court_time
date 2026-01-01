@@ -48,7 +48,7 @@ class CourtModel {
       type: map['type'] ?? 'Badminton',
       pricePerHour: (map['pricePerHour'] ?? 0).toDouble(),
       location: map['location'] ?? '',
-      imageUrl: map['imageUrl'] ?? 'https://placehold.co/150x150.png',
+      imageUrl: map['imageUrl'] ?? '',
       description: map['description'] ?? '',
       amenities: List<String>.from(map['amenities'] ?? []),
     );
