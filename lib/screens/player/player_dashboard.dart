@@ -402,7 +402,7 @@ class PlayerDashboard extends StatelessWidget {
             ),
             decoration: const BoxDecoration(
               gradient: LinearGradient(
-                colors: [Colors.blueAccent, Color.fromARGB(255, 152, 115, 255)], // Matches header
+                colors: [Colors.blueAccent, Color(0xFF448AFF)], // Matches header
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),

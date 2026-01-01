@@ -7,7 +7,6 @@ class CustomInput extends StatelessWidget {
   final bool isPassword;
   final TextInputType keyboardType;
   final String? Function(String?)? validator;
-  final Widget? suffixIcon; // Added for password toggle
 
   const CustomInput({
     Key? key,
@@ -17,43 +16,41 @@ class CustomInput extends StatelessWidget {
     this.isPassword = false,
     this.keyboardType = TextInputType.text,
     this.validator,
-    this.suffixIcon,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 20.0), // Increased spacing
+      padding: const EdgeInsets.only(bottom: 16.0),
       child: TextFormField(
         controller: controller,
         obscureText: isPassword,
         keyboardType: keyboardType,
         validator: validator,
-        style: const TextStyle(fontSize: 16, color: Colors.black87),
+        style: const TextStyle(fontSize: 16),
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: TextStyle(color: Colors.grey[600]),
           prefixIcon: Icon(icon, color: Colors.blueAccent),
-          suffixIcon: suffixIcon, // Render the eye icon
           filled: true,
-          fillColor: Colors.grey[50], // Lighter background
-          contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-          
-          // Cleaner Borders
+          fillColor: Colors.grey[100],
+          // Default Border
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16), // More rounded
+            borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide.none,
           ),
+          // Border when not focused
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(color: Colors.grey.shade200),
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.grey.shade300),
           ),
+          // Border when clicked/focused
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(12),
             borderSide: const BorderSide(color: Colors.blueAccent, width: 2),
           ),
+          // Border when there is an error
           errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(12),
             borderSide: const BorderSide(color: Colors.redAccent, width: 1.5),
           ),
         ),

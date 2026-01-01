@@ -18,26 +18,17 @@ class CustomButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SizedBox(
       width: double.infinity,
-      height: 55, // Slightly taller for better touch target
-      decoration: BoxDecoration(
-        boxShadow: [
-          BoxShadow(
-            color: backgroundColor.withOpacity(0.3),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
+      height: 50,
       child: ElevatedButton(
         onPressed: isLoading ? null : onPressed,
         style: ElevatedButton.styleFrom(
           backgroundColor: backgroundColor,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16), // Matches Input fields
+            borderRadius: BorderRadius.circular(12),
           ),
-          elevation: 0, // We used custom shadow above
+          elevation: 2,
         ),
         child: isLoading
             ? const SizedBox(
@@ -53,8 +44,7 @@ class CustomButton extends StatelessWidget {
                 style: TextStyle(
                   color: textColor,
                   fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.5,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
       ),
