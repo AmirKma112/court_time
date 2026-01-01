@@ -13,67 +13,107 @@ class CourtCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      elevation: 3,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      clipBehavior: Clip.antiAlias, // Ensures image doesn't bleed out corners
-      child: InkWell(
-        onTap: onTap,
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.06),
+              blurRadius: 15,
+              offset: const Offset(0, 8), // Shadow position
+            ),
+          ],
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 1. COURT IMAGE
-            SizedBox(
-              height: 150,
-              width: double.infinity,
-              child: Image.network(
-                court.imageUrl,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    color: Colors.grey[300],
-                    child: const Icon(Icons.broken_image, size: 50, color: Colors.grey),
-                  );
-                },
-              ),
+            // 1. IMAGE SECTION WITH BADGE
+            Stack(
+              children: [
+                Hero(
+                  tag: 'court-image-${court.id}', // Tag for animation
+                  child: ClipRRect(
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                    child: SizedBox(
+                      height: 180, // Increased height for better visual
+                      width: double.infinity,
+                      child: Image.network(
+                        court.imageUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            color: Colors.grey[100],
+                            child: const Icon(Icons.image_not_supported, size: 50, color: Colors.grey),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                ),
+                // Price Pill on Top Right
+                Positioned(
+                  top: 12,
+                  right: 12,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 4, offset: const Offset(0, 2))
+                      ]
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text(
+                          "RM",
+                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.blueAccent),
+                        ),
+                        const SizedBox(width: 2),
+                        Text(
+                          "${court.pricePerHour}",
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        const Text(
+                          "/hr",
+                          style: TextStyle(fontSize: 12, color: Colors.grey),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
 
-            // 2. COURT DETAILS
+            // 2. DETAILS SECTION
             Padding(
-              padding: const EdgeInsets.all(12.0),
+              padding: const EdgeInsets.all(16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Row 1: Name and Price
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // Court Name (Flexible prevents overflow if name is long)
-                      Flexible(
+                      // Name
+                      Expanded(
                         child: Text(
                           court.name,
                           style: const TextStyle(
-                            fontSize: 18,
+                            fontSize: 20,
                             fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                            height: 1.2,
                           ),
                           overflow: TextOverflow.ellipsis,
                           maxLines: 1,
-                        ),
-                      ),
-                      // Price
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Colors.blueAccent.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          "RM ${court.pricePerHour}/hr",
-                          style: const TextStyle(
-                            color: Colors.blueAccent,
-                            fontWeight: FontWeight.bold,
-                          ),
                         ),
                       ),
                     ],
@@ -81,23 +121,51 @@ class CourtCard extends StatelessWidget {
                   
                   const SizedBox(height: 8),
 
-                  // Row 2: Location
+                  // Location
                   Row(
+                    crossAxisAlignment: CrossAxisAlignment.start, // Align to top of text
                     children: [
-                      const Icon(Icons.location_on, size: 16, color: Colors.grey),
+                      const Padding(
+                        padding: EdgeInsets.only(top: 2.0),
+                        child: Icon(Icons.location_on_outlined, size: 16, color: Colors.grey),
+                      ),
                       const SizedBox(width: 4),
-                      
-                      // Use Expanded to handle long text
                       Expanded(
                         child: Text(
-                          court.location, // Make sure your model uses 'address' or 'location'
-                          style: TextStyle(color: Colors.grey[600]),
-                          overflow: TextOverflow.ellipsis, // Adds "..." at the end
-                          maxLines: 2, // Only show 1 line (change to 2 if you want wrapping)
+                          court.location,
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 14,
+                            height: 1.4,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 2,
                         ),
                       ),
                     ],
                   ),
+
+                  const SizedBox(height: 16),
+
+                  // Action Button
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    decoration: BoxDecoration(
+                      color: Colors.blueAccent.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Center(
+                      child: Text(
+                        "View Details",
+                        style: TextStyle(
+                          color: Colors.blueAccent,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  )
                 ],
               ),
             ),
