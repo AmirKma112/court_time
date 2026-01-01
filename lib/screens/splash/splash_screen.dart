@@ -106,7 +106,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                               ],
                             ),
                             child: const Image(
-                              image: NetworkImage('images/logo1.png'),
+                              image: AssetImage('images/logo1.png'),
                               color: Colors.white,
                               fit: BoxFit.contain,
                             ),

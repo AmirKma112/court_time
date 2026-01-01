@@ -98,7 +98,7 @@ class _LoginScreenState extends State<LoginScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // 1. LOGO & TITLE
-              const Image(image: NetworkImage('images/logo1.png'), width: 80, height: 80, color: Colors.blueAccent),
+              const Image(image: AssetImage('images/logo1.png'), width: 80, height: 80, color: Colors.blueAccent),
               const SizedBox(height: 16),
               const Text(
                 "CourtTime+",
