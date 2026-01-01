@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/court_model.dart';
 import '../player/booking/slot_selection_screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class CourtDetailScreen extends StatelessWidget {
   final CourtModel court;
@@ -50,7 +51,7 @@ class CourtDetailScreen extends StatelessWidget {
                   ),
 
                   Padding(
-                    padding: const EdgeInsets.all(20.0),
+                    padding: const EdgeInsets.all(24.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -77,7 +78,7 @@ class CourtDetailScreen extends StatelessWidget {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 12),
 
                         // Location
                         Row(
@@ -95,13 +96,65 @@ class CourtDetailScreen extends StatelessWidget {
                            
                           ],
                         ),
+                        const SizedBox(height: 16),
+
+                        // --- OWNED BY SECTION ---
+                        FutureBuilder<DocumentSnapshot>(
+                          future: FirebaseFirestore.instance
+                              .collection('users')
+                              .doc(court.ownerId) // Ensure CourtModel has this field
+                              .get(),
+                          builder: (context, snapshot) {
+                            String ownerName = "Loading...";
+                            if (snapshot.hasData && snapshot.data!.exists) {
+                              var data = snapshot.data!.data() as Map<String, dynamic>;
+                              ownerName = data['name'] ?? "Venue Owner";
+                            }
+                            
+                            return Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.grey[100],
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                children: [
+                                  CircleAvatar(
+                                    radius: 16,
+                                    backgroundColor: Colors.blueAccent.withOpacity(0.2),
+                                    child: const Icon(Icons.store, size: 18, color: Colors.blueAccent),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        "Owned by",
+                                        style: TextStyle(fontSize: 10, color: Colors.grey),
+                                      ),
+                                      Text(
+                                        ownerName,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold, 
+                                          fontSize: 14,
+                                          color: Colors.black87
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+
                         const SizedBox(height: 20),
                         const Divider(),
                         const SizedBox(height: 20),
-                        
+
                         // Description
                         const Text(
-                          "Description",
+                          "About this venue",
                           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 8),

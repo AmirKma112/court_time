@@ -83,7 +83,7 @@ class CourtCard extends StatelessWidget {
                           ),
                         ),
                         const Text(
-                          "/hr",
+                          "/hour",
                           style: TextStyle(fontSize: 12, color: Colors.grey),
                         ),
                       ],
