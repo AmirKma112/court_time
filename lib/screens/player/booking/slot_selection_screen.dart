@@ -99,6 +99,11 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
       appBar: AppBar(
         title: Text(isReschedule ? "Reschedule Booking" : "Select Slot"),
         backgroundColor: Colors.blueAccent,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            bottom: Radius.circular(30.0),
+          ),
+        ),
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
