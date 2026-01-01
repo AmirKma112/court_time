@@ -4,7 +4,7 @@ import '../../../services/auth_service.dart';
 import '../../../services/database_service.dart';
 import '../../../models/booking_model.dart';
 import '../../../widgets/booking_card.dart';
-import 'package:court_time/screens/player/booking/slot_selection_screen.dart'; //reshedule 
+import 'package:court_time/screens/player/booking/slot_selection_screen.dart';
 
 class MyBookingsScreen extends StatefulWidget {
   const MyBookingsScreen({super.key});
@@ -21,16 +21,11 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
     _checkExpiredBookings();
   }
 
-  // ==============================================================
-  // 1. AUTO-COMPLETE LOGIC (Moves old bookings to History)
-  // ==============================================================
   void _checkExpiredBookings() async {
     final userId = AuthService().getCurrentUserId();
     if (userId == null) return;
 
     final now = DateTime.now();
-
-    // Get all "Approved" bookings for this user
     final snapshot = await FirebaseFirestore.instance
         .collection('bookings')
         .where('userId', isEqualTo: userId)
@@ -43,8 +38,6 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
       
       if (bookingTimestamp != null) {
         DateTime bookingDate = bookingTimestamp.toDate();
-
-        // If booking is more than 1 hours in the past, mark as Completed
         if (bookingDate.isBefore(now.subtract(const Duration(hours: 1)))) {
           await DatabaseService().updateBookingStatus(doc.id, 'Completed');
         }
@@ -52,23 +45,25 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
     }
   }
 
-  // ==============================================================
-  // 2. CANCEL LOGIC
-  // ==============================================================
   void _cancelBooking(String bookingId) async {
     bool? confirm = await showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text("Cancel Booking?"),
         content: const Text("Are you sure you want to cancel your request?"),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
             child: const Text("No, Keep it"),
           ),
-          TextButton(
+          ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
             child: const Text("Yes, Cancel"),
           ),
         ],
@@ -85,31 +80,24 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
     }
   }
 
-  // ==============================================================
-  // 3. RESCHEDULE LOGIC (Update Time)
-  // ==============================================================
   void _rescheduleBooking(BookingModel booking) async {
-    // Show Loading
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (c) => const Center(child: CircularProgressIndicator()),
     );
 
-    // Fetch Court Details so we can open the selection screen
     final court = await DatabaseService().getCourtById(booking.courtId);
     
-    // Hide Loading
     if (mounted) Navigator.pop(context);
 
     if (court != null && mounted) {
-      // Navigate to SlotSelectionScreen in "Update Mode"
       Navigator.push(
         context,
         MaterialPageRoute(
           builder: (context) => SlotSelectionScreen(
             court: court,          
-            bookingId: booking.id, // Passing ID triggers "Update Mode"
+            bookingId: booking.id, 
           ),
         ),
       );
@@ -133,17 +121,49 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
+        backgroundColor: const Color(0xFFF5F7FA), // Light grey background
         appBar: AppBar(
-          title: const Text("My Bookings"),
-          backgroundColor: Colors.blueAccent,
-          bottom: const TabBar(
-            indicatorColor: Colors.white,
-            labelColor: Colors.white,
-            unselectedLabelColor: Colors.white70,
-            tabs: [
-              Tab(text: "Active"),
-              Tab(text: "History"),
-            ],
+          title: const Text(
+            "My Bookings",
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          centerTitle: true,
+          backgroundColor: Colors.white,
+          elevation: 0,
+          foregroundColor: Colors.black, // Dark text
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.black),
+            onPressed: () {
+              Navigator.pop(context); // Go back to Dashboard
+            },
+          ),
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(60),
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: Colors.grey[200],
+                borderRadius: BorderRadius.circular(30),
+              ),
+              child: TabBar(
+                dividerColor: Colors.transparent,
+                indicator: BoxDecoration(
+                  color: Colors.blueAccent,
+                  borderRadius: BorderRadius.circular(25),
+                  boxShadow: [
+                    BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 4, offset: const Offset(0, 2))
+                  ]
+                ),
+                labelColor: Colors.white,
+                unselectedLabelColor: Colors.grey[600],
+                labelStyle: const TextStyle(fontWeight: FontWeight.bold),
+                tabs: const [
+                  Tab(text: "Active"),
+                  Tab(text: "History"),
+                ],
+              ),
+            ),
           ),
         ),
         body: TabBarView(
@@ -157,8 +177,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
   }
 
   Widget _buildBookingList(String userId, {required bool isActive}) {
-    // Define which statuses belong to which tab
-    final List<String> activeStatuses = ['Pending', 'Approved', 'Confirmed'];
+    final List<String> activeStatuses = ['Pending', 'Approved'];
     final List<String> historyStatuses = ['Rejected', 'Cancelled', 'Completed'];
 
     final filterStatuses = isActive ? activeStatuses : historyStatuses;
@@ -181,14 +200,26 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  isActive ? Icons.calendar_today : Icons.history,
-                  size: 60,
-                  color: Colors.grey[300],
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.blueAccent.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    isActive ? Icons.calendar_today : Icons.history,
+                    size: 50,
+                    color: Colors.blueAccent,
+                  ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 20),
                 Text(
-                  isActive ? "No active bookings." : "No past history.",
+                  isActive ? "No active bookings" : "No past history",
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  isActive ? "Your upcoming games will appear here." : "Your completed games will appear here.",
                   style: TextStyle(color: Colors.grey[600]),
                 ),
               ],
@@ -198,42 +229,48 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
 
         final docs = snapshot.data!.docs;
 
-        return ListView.builder(
+        return ListView.separated(
           padding: const EdgeInsets.all(16),
           itemCount: docs.length,
+          separatorBuilder: (context, index) => const SizedBox(height: 16),
           itemBuilder: (context, index) {
             final data = docs[index].data() as Map<String, dynamic>;
             final booking = BookingModel.fromMap(data, docs[index].id);
-
-            // 🔒 RULES:
-            // 1. Only 'Pending' bookings can be Modified or Cancelled.
-            // 2. 'Approved' bookings are locked (must contact owner).
             final bool isEditable = booking.status == 'Pending';
 
             return BookingCard(
               booking: booking,
-              trailing: isActive
+              actionButtons: isActive && isEditable
                 ? Row(
-                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      // RESCHEDULE BUTTON (Blue Edit Icon)
-                      if (isEditable)
-                        IconButton(
-                          icon: const Icon(Icons.edit_calendar, color: Colors.blue),
-                          tooltip: "Reschedule / Update Time",
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          icon: const Icon(Icons.edit_calendar, size: 18),
+                          label: const Text("Reschedule"),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.blueAccent,
+                            side: const BorderSide(color: Colors.blueAccent),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
                           onPressed: () => _rescheduleBooking(booking),
                         ),
-                      
-                      // CANCEL BUTTON (Red X Icon)
-                      if (isEditable)
-                        IconButton(
-                          icon: const Icon(Icons.cancel, color: Colors.red),
-                          tooltip: "Cancel Request",
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          icon: const Icon(Icons.cancel_outlined, size: 18),
+                          label: const Text("Cancel"),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.redAccent,
+                            side: const BorderSide(color: Colors.redAccent),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
                           onPressed: () => _cancelBooking(booking.id),
                         ),
+                      ),
                     ],
                   )
-                : null, // No buttons for History or Approved bookings
+                : null,
             );
           },
         );
