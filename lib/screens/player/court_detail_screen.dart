@@ -164,7 +164,7 @@ class CourtDetailScreen extends StatelessWidget {
                               : "No description available for this court.",
                           style: const TextStyle(fontSize: 15, height: 1.5, color: Colors.black87),
                         ),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 16),
 
                         // Amenities Section
                         const Text(
@@ -225,7 +225,7 @@ class CourtDetailScreen extends StatelessWidget {
                   },
                   child: const Text(
                     "BOOK NOW", 
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)
                   ),
                 ),
               ),
