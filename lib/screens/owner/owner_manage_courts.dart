@@ -189,7 +189,7 @@ class OwnerManageCourts extends StatelessWidget {
                                       borderRadius: BorderRadius.circular(6),
                                     ),
                                     child: Text(
-                                      "RM ${court.pricePerHour}/hr",
+                                      "RM ${court.pricePerHour.toStringAsFixed(2)}/hour",
                                       style: const TextStyle(
                                         color: Colors.deepOrange, 
                                         fontWeight: FontWeight.bold, 

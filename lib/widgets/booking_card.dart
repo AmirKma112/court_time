@@ -95,7 +95,7 @@ class BookingCard extends StatelessWidget {
                     color: Colors.blueAccent.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.sports_tennis, color: Colors.blueAccent),
+                  child: const Icon(Icons.sports, color: Colors.blueAccent),
                 ),
                 const SizedBox(width: 16),
                 
