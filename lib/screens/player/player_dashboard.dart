@@ -112,7 +112,7 @@ class PlayerDashboard extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(24, 110, 24, 90), 
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [Color(0xFF4568DC), Color(0xFFB06AB3)], // Blue to Purple modern gradient
+          colors: [Colors.blueAccent, Color.fromARGB(255, 152, 115, 255)], // Blue to Purple modern gradient
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -402,7 +402,7 @@ class PlayerDashboard extends StatelessWidget {
             ),
             decoration: const BoxDecoration(
               gradient: LinearGradient(
-                colors: [Color(0xFF4568DC), Color(0xFFB06AB3)], // Matches header
+                colors: [Colors.blueAccent, Color.fromARGB(255, 152, 115, 255)], // Matches header
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
