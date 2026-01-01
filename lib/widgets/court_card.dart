@@ -75,7 +75,7 @@ class CourtCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 2),
                         Text(
-                          "${court.pricePerHour}",
+                          "${court.pricePerHour.toStringAsFixed(2)}",
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w800,

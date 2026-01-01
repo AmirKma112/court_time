@@ -68,7 +68,7 @@ class CourtDetailScreen extends StatelessWidget {
                               ),
                             ),
                             Text(
-                              "RM ${court.pricePerHour.toStringAsFixed(2)}/hr",
+                              "RM ${court.pricePerHour.toStringAsFixed(2)}/hour",
                               style: const TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
@@ -82,7 +82,7 @@ class CourtDetailScreen extends StatelessWidget {
                         // Location
                         Row(
                           children: [
-                            const Icon(Icons.location_on, color: Colors.grey, size: 18),
+                            const Icon(Icons.location_on, color: Colors.red, size: 18),
                             const SizedBox(width: 4),
                             Expanded( 
                               child: Text(
@@ -96,8 +96,8 @@ class CourtDetailScreen extends StatelessWidget {
                           ],
                         ),
                         const SizedBox(height: 20),
-                        
                         const Divider(),
+                        const SizedBox(height: 20),
                         
                         // Description
                         const Text(
