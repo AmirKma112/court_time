@@ -4,6 +4,7 @@ import '../../services/auth_service.dart';
 import '../auth/login_screen.dart';
 import 'court_list_screen.dart';
 import 'profile/my_bookings_screen.dart';
+import 'profile/my_profile_screen.dart';
 
 class PlayerDashboard extends StatelessWidget {
   const PlayerDashboard({super.key});
@@ -57,7 +58,7 @@ class PlayerDashboard extends StatelessWidget {
       backgroundColor: const Color(0xFFF8F9FD), // Very light grey-blue (Cleaner)
       extendBodyBehindAppBar: true, 
       appBar: AppBar(
-        title: const Text("CourtTime+", style: TextStyle(fontWeight: FontWeight.w800, letterSpacing: 1.0)),
+        title: const Text("Dashboard", style: TextStyle(fontWeight: FontWeight.w800, letterSpacing: 1.0)),
         centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -399,7 +400,7 @@ class PlayerDashboard extends StatelessWidget {
 
   Widget _buildDrawer(BuildContext context, String userEmail, String? userId) {
     return Drawer(
-      width: 280, // Fixed width for better proportions
+      width: 280, 
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.only(
@@ -409,13 +410,13 @@ class PlayerDashboard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // 1. CUSTOM HEADER
+          // 1. CUSTOM HEADER (Same as before)
           Container(
             width: double.infinity,
             padding: const EdgeInsets.fromLTRB(24, 60, 24, 24),
             decoration: const BoxDecoration(
               gradient: LinearGradient(
-                colors: [Color(0xFF2962FF), Color(0xFF448AFF)], // Modern Blue Gradient
+                colors: [Color(0xFF2962FF), Color(0xFF448AFF)], 
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -423,7 +424,7 @@ class PlayerDashboard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Profile Picture with Ring
+                // Avatar
                 Container(
                   padding: const EdgeInsets.all(4),
                   decoration: BoxDecoration(
@@ -435,17 +436,12 @@ class PlayerDashboard extends StatelessWidget {
                     backgroundColor: Colors.white,
                     child: Text(
                       userEmail.isNotEmpty ? userEmail[0].toUpperCase() : "P",
-                      style: const TextStyle(
-                        fontSize: 28, 
-                        color: Color(0xFF2962FF), 
-                        fontWeight: FontWeight.bold
-                      ),
+                      style: const TextStyle(fontSize: 28, color: Color(0xFF2962FF), fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),
                 const SizedBox(height: 16),
-                
-                // Name (Streamed)
+                // Name
                 StreamBuilder<DocumentSnapshot>(
                   stream: FirebaseFirestore.instance.collection('users').doc(userId).snapshots(),
                   builder: (context, snapshot) {
@@ -455,17 +451,11 @@ class PlayerDashboard extends StatelessWidget {
                     }
                     return Text(
                       name,
-                      style: const TextStyle(
-                        color: Colors.white, 
-                        fontSize: 20, 
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 0.5
-                      ),
+                      style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
                     );
                   },
                 ),
                 const SizedBox(height: 4),
-                
                 // Email
                 Row(
                   children: [
@@ -473,10 +463,7 @@ class PlayerDashboard extends StatelessWidget {
                     const SizedBox(width: 6),
                     Text(
                       userEmail,
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.8), 
-                        fontSize: 13
-                      ),
+                      style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 13),
                     ),
                   ],
                 ),
@@ -503,11 +490,26 @@ class PlayerDashboard extends StatelessWidget {
                     );
                   },
                 ),
+                const SizedBox(height: 8),
+                
+                // --- NEW PROFILE TILE ---
+                _buildDrawerTile(
+                  icon: Icons.person_outline_rounded,
+                  title: "My Profile",
+                  color: Colors.purpleAccent,
+                  onTap: () {
+                    Navigator.pop(context); // Close drawer
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const MyProfileScreen()), // Navigate
+                    );
+                  },
+                ),
               ],
             ),
           ),
 
-          // 3. LOGOUT & VERSION
+          // 3. LOGOUT
           Padding(
             padding: const EdgeInsets.all(24.0),
             child: Column(
@@ -519,21 +521,11 @@ class PlayerDashboard extends StatelessWidget {
                   tileColor: Colors.red.withOpacity(0.08),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                   leading: const Icon(Icons.logout_rounded, color: Colors.redAccent),
-                  title: const Text(
-                    'Logout', 
-                    style: TextStyle(
-                      color: Colors.redAccent, 
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16
-                    )
-                  ),
+                  title: const Text('Logout', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold, fontSize: 16)),
                   onTap: () => _handleLogout(context),
                 ),
                 const SizedBox(height: 16),
-                Text(
-                  "Version 1.0.0",
-                  style: TextStyle(color: Colors.grey[400], fontSize: 12),
-                ),
+                Text("Version 1.0.0", style: TextStyle(color: Colors.grey[400], fontSize: 12)),
               ],
             ),
           ),
@@ -542,7 +534,7 @@ class PlayerDashboard extends StatelessWidget {
     );
   }
 
-  // --- HELPER WIDGET FOR DRAWER TILES ---
+  // Use the same helper widget you already have
   Widget _buildDrawerTile({
     required IconData icon,
     required String title,
@@ -555,22 +547,14 @@ class PlayerDashboard extends StatelessWidget {
       leading: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1), // Light background matching icon color
+          color: color.withOpacity(0.1),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Icon(icon, color: color, size: 22),
       ),
-      title: Text(
-        title, 
-        style: TextStyle(
-          fontWeight: FontWeight.w600, 
-          color: Colors.grey[800],
-          fontSize: 15
-        )
-      ),
+      title: Text(title, style: TextStyle(fontWeight: FontWeight.w600, color: Colors.grey[800], fontSize: 15)),
       trailing: Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Colors.grey[400]),
       onTap: onTap,
     );
-  
   }
 }
