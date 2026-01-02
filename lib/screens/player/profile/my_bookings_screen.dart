@@ -129,10 +129,21 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
           ),
           centerTitle: true,
           backgroundColor: Colors.white,
+          flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF2962FF), Color(0xFF448AFF)], // Modern Blue Gradient
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.vertical(
+              bottom: Radius.circular(30.0),
+            ),
+          ),
+        ),
           elevation: 0,
-          foregroundColor: Colors.black, // Dark text
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.black),
+            icon: const Icon(Icons.arrow_back),
             onPressed: () {
               Navigator.pop(context); // Go back to Dashboard
             },
