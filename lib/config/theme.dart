@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class AppTheme {
   // Define the main colors here for easy changing later
   static const Color primaryColor = Colors.blueAccent;
-  static const Color scaffoldBackground = Color(0xFFFAFAFA); // Colors.grey[50] equivalent
+  static const Color scaffoldBackground = Color(0xFFFAFAFA);
 
   static final ThemeData lightTheme = ThemeData(
     primarySwatch: Colors.blue,
