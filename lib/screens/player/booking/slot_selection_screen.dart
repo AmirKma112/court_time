@@ -161,7 +161,7 @@ class _SlotSelectionScreenState extends State<SlotSelectionScreen> {
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
-                            "RM ${widget.court.pricePerHour}/hr",
+                            "RM ${widget.court.pricePerHour.toStringAsFixed(2)}/hour",
                             style: const TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold, fontSize: 12),
                           ),
                         ),
