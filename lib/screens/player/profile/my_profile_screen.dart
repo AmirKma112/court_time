@@ -89,7 +89,19 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
       backgroundColor: const Color(0xFFF8F9FD),
       appBar: AppBar(
         title: const Text("My Profile", style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF2962FF), Color(0xFF448AFF)], // Modern Blue Gradient
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.vertical(
+              bottom: Radius.circular(30.0),
+            ),
+          ),
+        ),
         foregroundColor: Colors.black,
         elevation: 0,
         centerTitle: true,
