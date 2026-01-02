@@ -199,13 +199,12 @@ class OwnerDashboard extends StatelessWidget {
       ),
       title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
       // Fetch the count from Firestore directly
-      trailing: FutureBuilder<AggregateQuerySnapshot>(
-        future: FirebaseFirestore.instance
+      trailing: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance
             .collection('bookings')
             .where('ownerId', isEqualTo: ownerId)
             .where('status', isEqualTo: status)
-            .count()
-            .get(),
+            .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const SizedBox(
@@ -213,11 +212,8 @@ class OwnerDashboard extends StatelessWidget {
               child: CircularProgressIndicator(strokeWidth: 2)
             );
           }
-          if (snapshot.hasError) {
-            return const Text("-", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16));
-          }
           
-          final count = snapshot.data?.count ?? 0;
+          final count = snapshot.data?.docs.length ?? 0;
           
           return Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
