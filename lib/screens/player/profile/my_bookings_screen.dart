@@ -142,12 +142,6 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
           ),
         ),
           elevation: 0,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () {
-              Navigator.pop(context); // Go back to Dashboard
-            },
-          ),
           bottom: PreferredSize(
             preferredSize: const Size.fromHeight(60),
             child: Container(
