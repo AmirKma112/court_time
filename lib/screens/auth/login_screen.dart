@@ -21,7 +21,20 @@ class _LoginScreenState extends State<LoginScreen> {
   
   bool _isLoading = false;
 
+  // ---------------------------------------------------------
+  // 1. FIXED: Dispose method to prevent memory leaks
+  // ---------------------------------------------------------
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
   void _handleLogin() async {
+    // 2. FIXED: Close keyboard immediately when button is pressed
+    FocusScope.of(context).unfocus();
+
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
@@ -40,10 +53,13 @@ class _LoginScreenState extends State<LoginScreen> {
               .doc(uid)
               .get();
 
-          if (userDoc.exists) {
-            String role = userDoc['role'] ?? 'player';
+          if (!mounted) return; // Check mounted before using context
 
-            if (!mounted) return;
+          if (userDoc.exists) {
+            // 3. FIXED: Safer way to get data. Prevents crash if data is null.
+            Map<String, dynamic>? data = userDoc.data() as Map<String, dynamic>?;
+            String role = data?['role'] ?? 'player';
+
             setState(() => _isLoading = false);
 
             if (role == 'owner') {
@@ -58,7 +74,7 @@ class _LoginScreenState extends State<LoginScreen> {
               );
             }
           } else {
-             if (!mounted) return;
+             // Fallback if user exists in Auth but not Firestore
              setState(() => _isLoading = false);
              Navigator.pushReplacement(
                 context,
@@ -88,108 +104,104 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // 1. DARKENED BACKGROUND so the white box is visible
       backgroundColor: Colors.grey[200], 
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // 1. LOGO & TITLE
-              const Image(image: AssetImage('images/logo1.png'), width: 80, height: 80, color: Colors.blueAccent),
-              const SizedBox(height: 16),
-              const Text(
-                "CourtTime+",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 32, 
-                  fontWeight: FontWeight.bold, 
-                  color: Colors.blueAccent
+      // 4. FIXED: Tap anywhere to dismiss keyboard
+      body: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Image(image: AssetImage('images/logo1.png'), width: 80, height: 80, color: Colors.blueAccent),
+                const SizedBox(height: 16),
+                const Text(
+                  "CourtTime+",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 32, 
+                    fontWeight: FontWeight.bold, 
+                    color: Colors.blueAccent
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                "Welcome back! Please login.",
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.grey[600], fontSize: 16),
-              ),
-              const SizedBox(height: 40),
-
-              // 2. THE BOX (Now with stronger shadow)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
-                    BoxShadow(
-                      // 2. STRONGER SHADOW (0.15 opacity instead of 0.05)
-                      color: Colors.black.withOpacity(0.15), 
-                      blurRadius: 20,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
+                const SizedBox(height: 8),
+                Text(
+                  "Welcome back! Please login.",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.grey[600], fontSize: 16),
                 ),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    children: [
-                      // EMAIL INPUT
-                      CustomInput(
-                        label: "Email Address",
-                        icon: Icons.email,
-                        controller: _emailController,
-                        keyboardType: TextInputType.emailAddress,
-                        validator: (val) {
-                          if (val == null || val.isEmpty) return "Please enter your email";
-                          if (!val.contains('@')) return "Invalid email address";
-                          return null;
-                        },
-                      ),
-
-                      // PASSWORD INPUT
-                      CustomInput(
-                        label: "Password",
-                        icon: Icons.lock,
-                        controller: _passwordController,
-                        isPassword: true,
-                        validator: (val) => val!.isEmpty ? "Please enter your password" : null,
-                      ),
-
-                      const SizedBox(height: 24),
-
-                      // LOGIN BUTTON
-                      CustomButton(
-                        text: "LOGIN",
-                        isLoading: _isLoading,
-                        onPressed: _handleLogin,
+                const SizedBox(height: 40),
+        
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.15), 
+                        blurRadius: 20,
+                        offset: const Offset(0, 10),
                       ),
                     ],
                   ),
-                ),
-              ),
-              
-              const SizedBox(height: 24),
-
-              // 3. REGISTER LINK
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text("Don't have an account?", style: TextStyle(color: Colors.grey[600])),
-                  TextButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const RegisterScreen()),
-                      );
-                    },
-                    child: const Text("Create Account", style: TextStyle(fontWeight: FontWeight.bold)),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      children: [
+                        CustomInput(
+                          label: "Email Address",
+                          icon: Icons.email,
+                          controller: _emailController,
+                          keyboardType: TextInputType.emailAddress,
+                          validator: (val) {
+                            if (val == null || val.isEmpty) return "Please enter your email";
+                            if (!val.contains('@')) return "Invalid email address";
+                            return null;
+                          },
+                        ),
+                        
+                        CustomInput(
+                          label: "Password",
+                          icon: Icons.lock,
+                          controller: _passwordController,
+                          isPassword: true,
+                          validator: (val) => val!.isEmpty ? "Please enter your password" : null,
+                        ),
+        
+                        const SizedBox(height: 24),
+        
+                        CustomButton(
+                          text: "LOGIN",
+                          isLoading: _isLoading,
+                          onPressed: _handleLogin,
+                        ),
+                      ],
+                    ),
                   ),
-                ],
-              ),
-            ],
+                ),
+                
+                const SizedBox(height: 24),
+        
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text("Don't have an account?", style: TextStyle(color: Colors.grey[600])),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const RegisterScreen()),
+                        );
+                      },
+                      child: const Text("Create Account", style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),

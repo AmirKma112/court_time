@@ -47,6 +47,18 @@ class _OwnerAddCourtState extends State<OwnerAddCourt> {
     }
   }
 
+  // ---------------------------------------------------------------------------
+  // 1. FIXED: Dispose Controllers (Prevents Memory Leaks)
+  // ---------------------------------------------------------------------------
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _priceController.dispose();
+    _locationController.dispose();
+    _descController.dispose();
+    super.dispose();
+  }
+
   Future<void> _pickImage() async {
     final pickedFile = await ImagePicker().pickImage(
       source: ImageSource.gallery,
@@ -60,6 +72,7 @@ class _OwnerAddCourtState extends State<OwnerAddCourt> {
     }
   }
 
+  // NOTE: In a larger app, move this method to a separate StorageService!
   Future<String> _uploadImage(File image) async {
     try {
       final String fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
@@ -77,6 +90,9 @@ class _OwnerAddCourtState extends State<OwnerAddCourt> {
   }
 
   void _saveCourt() async {
+    // 2. FIXED: Unfocus keyboard before saving
+    FocusScope.of(context).unfocus();
+
     if (_formKey.currentState!.validate()) {
       if (_pickedImageFile == null && _existingImageUrl == null) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -104,7 +120,8 @@ class _OwnerAddCourtState extends State<OwnerAddCourt> {
           ownerId: ownerId,
           name: _nameController.text.trim(),
           type: _selectedType,
-          pricePerHour: double.parse(_priceController.text.trim()),
+          // Safety: validation ensures this is a double now
+          pricePerHour: double.parse(_priceController.text.trim()), 
           location: _locationController.text.trim(),
           description: _descController.text.trim(),
           imageUrl: finalImageUrl, 
@@ -155,191 +172,198 @@ class _OwnerAddCourtState extends State<OwnerAddCourt> {
         elevation: 0,
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              
-              // 1. IMAGE UPLOAD SECTION
-              GestureDetector(
-                onTap: _pickImage,
-                child: Container(
-                  height: 220,
-                  width: double.infinity,
+      // 3. FIXED: Tap anywhere to close keyboard
+      body: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                
+                // 1. IMAGE UPLOAD SECTION
+                GestureDetector(
+                  onTap: _pickImage,
+                  child: Container(
+                    height: 220,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: Colors.grey.shade300),
+                      boxShadow: [
+                        BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
+                      ],
+                      image: _pickedImageFile != null
+                          ? DecorationImage(image: FileImage(_pickedImageFile!), fit: BoxFit.cover)
+                          : (_existingImageUrl != null && _existingImageUrl!.isNotEmpty)
+                              ? DecorationImage(image: NetworkImage(_existingImageUrl!), fit: BoxFit.cover)
+                              : null,
+                    ),
+                    child: (_pickedImageFile == null && _existingImageUrl == null)
+                        ? Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Colors.orange.withOpacity(0.1),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(Icons.add_a_photo_rounded, size: 40, color: Colors.orange),
+                              ),
+                              const SizedBox(height: 12),
+                              Text("Tap to upload venue photo", style: TextStyle(color: Colors.grey[600], fontWeight: FontWeight.bold)),
+                            ],
+                          )
+                        : Container(
+                            alignment: Alignment.bottomRight,
+                            padding: const EdgeInsets.all(12),
+                            child: CircleAvatar(
+                              backgroundColor: Colors.white,
+                              child: const Icon(Icons.edit, color: Colors.orange),
+                            ),
+                          ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+    
+                // 2. BASIC DETAILS CARD
+                _buildSectionTitle("Basic Info"),
+                Container(
+                  padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: Colors.grey.shade300),
-                    boxShadow: [
-                      BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
-                    ],
-                    image: _pickedImageFile != null
-                        ? DecorationImage(image: FileImage(_pickedImageFile!), fit: BoxFit.cover)
-                        : (_existingImageUrl != null && _existingImageUrl!.isNotEmpty)
-                            ? DecorationImage(image: NetworkImage(_existingImageUrl!), fit: BoxFit.cover)
-                            : null,
+                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
                   ),
-                  child: (_pickedImageFile == null && _existingImageUrl == null)
-                      ? Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: Colors.orange.withOpacity(0.1),
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(Icons.add_a_photo_rounded, size: 40, color: Colors.orange),
-                            ),
-                            const SizedBox(height: 12),
-                            Text("Tap to upload venue photo", style: TextStyle(color: Colors.grey[600], fontWeight: FontWeight.bold)),
-                          ],
-                        )
-                      : Container(
-                          alignment: Alignment.bottomRight,
-                          padding: const EdgeInsets.all(12),
-                          child: CircleAvatar(
-                            backgroundColor: Colors.white,
-                            child: const Icon(Icons.edit, color: Colors.orange),
-                          ),
+                  child: Column(
+                    children: [
+                      CustomInput(
+                        label: "Court Name",
+                        icon: Icons.stadium_rounded,
+                        controller: _nameController,
+                        validator: (val) => val!.isEmpty ? "Required" : null,
+                      ),
+                      const SizedBox(height: 16),
+                      
+                      DropdownButtonFormField<String>(
+                        value: _selectedType,
+                        decoration: InputDecoration(
+                          labelText: "Sport Type",
+                          prefixIcon: const Icon(Icons.sports, color: Colors.blueAccent),
+                          filled: true,
+                          fillColor: Colors.grey[50],
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade200)),
                         ),
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // 2. BASIC DETAILS CARD
-              _buildSectionTitle("Basic Info"),
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
-                ),
-                child: Column(
-                  children: [
-                    CustomInput(
-                      label: "Court Name",
-                      icon: Icons.stadium_rounded,
-                      controller: _nameController,
-                      validator: (val) => val!.isEmpty ? "Required" : null,
-                    ),
-                    const SizedBox(height: 16),
-                    
-                    // Dropdown for Type
-                    DropdownButtonFormField<String>(
-                      value: _selectedType,
-                      decoration: InputDecoration(
-                        labelText: "Sport Type",
-                        prefixIcon: const Icon(Icons.sports, color: Colors.blueAccent),
-                        filled: true,
-                        fillColor: Colors.grey[50],
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade200)),
+                        items: ['Badminton', 'Futsal']
+                            .map((type) => DropdownMenuItem(value: type, child: Text(type)))
+                            .toList(),
+                        onChanged: (val) => setState(() => _selectedType = val!),
                       ),
-                      items: ['Badminton', 'Futsal']
-                          .map((type) => DropdownMenuItem(value: type, child: Text(type)))
-                          .toList(),
-                      onChanged: (val) => setState(() => _selectedType = val!),
-                    ),
-                    const SizedBox(height: 16),
-
-                    CustomInput(
-                      label: "Price per Hour (RM)",
-                      icon: Icons.attach_money_rounded,
-                      controller: _priceController,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      validator: (val) => val!.isEmpty ? "Required" : null,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // 3. LOCATION & DESCRIPTION
-              _buildSectionTitle("Details"),
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
-                ),
-                child: Column(
-                  children: [
-                    CustomInput(
-                      label: "Location",
-                      icon: Icons.location_on_rounded,
-                      controller: _locationController,
-                      validator: (val) => val!.isEmpty ? "Required" : null,
-                    ),
-                    const SizedBox(height: 16),
-                    CustomInput(
-                      label: "Description & Rules",
-                      icon: Icons.description_rounded,
-                      controller: _descController,
-                      keyboardType: TextInputType.multiline,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // 4. AMENITIES
-              _buildSectionTitle("Amenities"),
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
-                ),
-                child: Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: _availableAmenities.map((amenity) {
-                    final isSelected = _selectedAmenities.contains(amenity);
-                    return FilterChip(
-                      label: Text(amenity),
-                      selected: isSelected,
-                      selectedColor: Colors.orange.withOpacity(0.2),
-                      checkmarkColor: Colors.deepOrange,
-                      labelStyle: TextStyle(
-                        color: isSelected ? Colors.deepOrange : Colors.black87,
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal
+                      const SizedBox(height: 16),
+    
+                      CustomInput(
+                        label: "Price per Hour (RM)",
+                        icon: Icons.attach_money_rounded,
+                        controller: _priceController,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        // 4. FIXED: Better validation to prevent app crash on invalid number
+                        validator: (val) {
+                          if (val == null || val.isEmpty) return "Required";
+                          if (double.tryParse(val) == null) return "Invalid price";
+                          return null;
+                        },
                       ),
-                      backgroundColor: Colors.grey[100],
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        side: BorderSide(color: isSelected ? Colors.orange : Colors.transparent),
-                      ),
-                      onSelected: (bool selected) {
-                        setState(() {
-                          if (selected) {
-                            _selectedAmenities.add(amenity);
-                          } else {
-                            _selectedAmenities.remove(amenity);
-                          }
-                        });
-                      },
-                    );
-                  }).toList(),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 30),
-
-              // 5. SAVE BUTTON
-              CustomButton(
-                text: "SAVE COURT",
-                isLoading: _isLoading,
-                backgroundColor: Colors.deepOrange,
-                onPressed: _saveCourt,
-              ),
-              const SizedBox(height: 30),
-            ],
+                const SizedBox(height: 24),
+    
+                // 3. LOCATION & DESCRIPTION
+                _buildSectionTitle("Details"),
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
+                  ),
+                  child: Column(
+                    children: [
+                      CustomInput(
+                        label: "Location",
+                        icon: Icons.location_on_rounded,
+                        controller: _locationController,
+                        validator: (val) => val!.isEmpty ? "Required" : null,
+                      ),
+                      const SizedBox(height: 16),
+                      CustomInput(
+                        label: "Description & Rules",
+                        icon: Icons.description_rounded,
+                        controller: _descController,
+                        keyboardType: TextInputType.multiline,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+    
+                // 4. AMENITIES
+                _buildSectionTitle("Amenities"),
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
+                  ),
+                  child: Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: _availableAmenities.map((amenity) {
+                      final isSelected = _selectedAmenities.contains(amenity);
+                      return FilterChip(
+                        label: Text(amenity),
+                        selected: isSelected,
+                        selectedColor: Colors.orange.withOpacity(0.2),
+                        checkmarkColor: Colors.deepOrange,
+                        labelStyle: TextStyle(
+                          color: isSelected ? Colors.deepOrange : Colors.black87,
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal
+                        ),
+                        backgroundColor: Colors.grey[100],
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          side: BorderSide(color: isSelected ? Colors.orange : Colors.transparent),
+                        ),
+                        onSelected: (bool selected) {
+                          setState(() {
+                            if (selected) {
+                              _selectedAmenities.add(amenity);
+                            } else {
+                              _selectedAmenities.remove(amenity);
+                            }
+                          });
+                        },
+                      );
+                    }).toList(),
+                  ),
+                ),
+                const SizedBox(height: 30),
+    
+                CustomButton(
+                  text: "SAVE COURT",
+                  isLoading: _isLoading,
+                  backgroundColor: Colors.deepOrange,
+                  onPressed: _saveCourt,
+                ),
+                const SizedBox(height: 30),
+              ],
+            ),
           ),
         ),
       ),
