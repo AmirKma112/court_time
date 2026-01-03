@@ -174,7 +174,6 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
                     const SizedBox(height: 16),
 
                     // 3. Email Field (Read-only manual styling)
-                    // We don't use CustomInput here because we want a specific "disabled" look
                     TextFormField(
                       controller: _emailController,
                       readOnly: true,
