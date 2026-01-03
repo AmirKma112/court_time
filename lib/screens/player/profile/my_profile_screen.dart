@@ -88,7 +88,7 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FD),
       appBar: AppBar(
-        title: const Text("My Profile", style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text("My Profile", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
         backgroundColor: Colors.transparent,
         flexibleSpace: Container(
           decoration: const BoxDecoration(
@@ -102,7 +102,7 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
             ),
           ),
         ),
-        foregroundColor: Colors.black,
+        foregroundColor: Colors.white, // Changed to white for better contrast on gradient
         elevation: 0,
         centerTitle: true,
       ),
@@ -110,34 +110,22 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            // --- AVATAR SECTION ---
+            // --- AVATAR SECTION (Edit Icon Removed) ---
             Center(
-              child: Stack(
-                children: [
-                  Container(
-                    width: 120, height: 120,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white,
-                      border: Border.all(color: Colors.blueAccent.withOpacity(0.2), width: 4),
-                      boxShadow: [BoxShadow(color: Colors.blueAccent.withOpacity(0.1), blurRadius: 20, offset: const Offset(0, 10))],
-                    ),
-                    child: Center(
-                      child: Text(
-                        (_emailController.text.isNotEmpty) ? _emailController.text[0].toUpperCase() : "p",
-                        style: const TextStyle(fontSize: 50, fontWeight: FontWeight.bold, color: Colors.blueAccent),
-                      ),
-                    ),
+              child: Container(
+                width: 120, height: 120,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white,
+                  border: Border.all(color: Colors.blueAccent.withOpacity(0.2), width: 4),
+                  boxShadow: [BoxShadow(color: Colors.blueAccent.withOpacity(0.1), blurRadius: 20, offset: const Offset(0, 10))],
+                ),
+                child: Center(
+                  child: Text(
+                    (_emailController.text.isNotEmpty) ? _emailController.text[0].toUpperCase() : "P",
+                    style: const TextStyle(fontSize: 50, fontWeight: FontWeight.bold, color: Colors.blueAccent),
                   ),
-                  Positioned(
-                    bottom: 0, right: 0,
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: const BoxDecoration(color: Colors.blueAccent, shape: BoxShape.circle),
-                      child: const Icon(Icons.edit, color: Colors.white, size: 20),
-                    ),
-                  )
-                ],
+                ),
               ),
             ),
             const SizedBox(height: 30),
