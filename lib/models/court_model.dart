@@ -22,6 +22,33 @@ class CourtModel {
   });
 
   // =======================================================================
+  // 1. CopyWith (NEW: Helps with editing and state updates)
+  // =======================================================================
+  CourtModel copyWith({
+    String? id,
+    String? ownerId,
+    String? name,
+    String? type,
+    double? pricePerHour,
+    String? location,
+    String? imageUrl,
+    String? description,
+    List<String>? amenities,
+  }) {
+    return CourtModel(
+      id: id ?? this.id,
+      ownerId: ownerId ?? this.ownerId,
+      name: name ?? this.name,
+      type: type ?? this.type,
+      pricePerHour: pricePerHour ?? this.pricePerHour,
+      location: location ?? this.location,
+      imageUrl: imageUrl ?? this.imageUrl,
+      description: description ?? this.description,
+      amenities: amenities ?? this.amenities,
+    );
+  }
+
+  // =======================================================================
   // 1. Convert CourtModel to Map (For saving to Firestore)
   // =======================================================================
   Map<String, dynamic> toMap() {
